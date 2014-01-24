@@ -32,7 +32,7 @@ As of now we have enough implemented in Flex++/Bison++ to start generating some 
 using namespace std;
 %}
 
-%token VAR_NAME NUMBER DECI_NUM TYPE VAR COLON LP RP EQUAL UNKNOWN
+%token VAR_NAME COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP EQUAL UNKNOWN
 
 %%
 
@@ -64,7 +64,17 @@ var_set: var_name EQUAL LP number RP
 				output_stream << "__mm128 " << string ($1) << " = _mm_setr_ps(" << num_stream.str() << num_stream.str() << num_stream.str() << (string) $4 << ");";
 				$$ = strdup((output_stream.str()).c_str());	
 
+			}
+| var_name EQUAL LP number COMMA number COMMA number COMMA number RP
+			{
+				stringstream output_stream;
+				stringstream num_stream;
+				num_stream << string ($4) << "," << string ($6) << "," << string ($8) << "," << string ($10); 
+				output_stream << "__mm128 " << string ($1) << " = _mm_setr_ps(" << num_stream.str() << ");";
+				$$ = strdup((output_stream.str()).c_str());
+
 			};
+
 var_declare: varible var_name COLON LP type RP
 			{
 					stringstream ss;

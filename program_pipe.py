@@ -27,9 +27,13 @@ else:
 	output_file = open(output,'w')
 	#delete all of the file information 
 	output_file.truncate()
+	output_file.write("#include <xmmintrin.h>\n")
+	output_file.write("int main()\n{")
 	#IF WE ARE MISSING THINGS LOOK AT THIS LOOP FIRST HACKED TOGETHER AT BEST
 	for x in xrange(1,len(list_string)-2): 
+		output_file.write("\t")
 		output_file.write(list_string[x])
 		output_file.write("\n")
+	output_file.write("}\n")
 	
 

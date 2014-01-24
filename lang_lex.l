@@ -39,6 +39,8 @@ DIGIT1 [1-9]
 
 ":"				{return Parser::COLON;}
 
+","				{return Parser::COMMA;}
+
 [a-zA-Z][0-9a-zA-Z]*		{return Parser::VAR_NAME;}
 
 [ \t\f\n]			;

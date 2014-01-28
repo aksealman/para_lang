@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "parser.h"
+
 using std::cout;
 using std::endl;
 using std::cin;
@@ -34,6 +35,10 @@ DIGIT1 [1-9]
 "("				{return Parser::LP;}
 
 ")"				{return Parser::RP;}
+
+"+" 				{return Parser::PLUS;}
+
+"-" 				{return Parser::MINUS;}
 
 "="				{return Parser::EQUAL;}
 

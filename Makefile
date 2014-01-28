@@ -1,14 +1,14 @@
 all: parser.o lexer.o 
-	g++ -o trial lexer.o parser.o -lfl -w 
+	g++ -o trial lexer.o parser.o -lfl -w -std=c++0x
 
 parser.o: parser.cpp
-	g++ -c -o parser.o parser.cpp -fpermissive -w -lfl
+	g++ -c -o parser.o parser.cpp -fpermissive -w -lfl -std=c++0x
 
 parser.cpp:
 	bison++ -d -hparser.h -oparser.cpp lang_parse.y 
 
 lexer.o: scanner.cpp
-	g++ -c -o lexer.o scanner.cpp -fpermissive -w -lfl
+	g++ -c -o lexer.o scanner.cpp -fpermissive -w -lfl -std=c++0x
 
 
 scanner.cpp:

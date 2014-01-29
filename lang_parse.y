@@ -15,10 +15,11 @@ Zak Williams
 
 As of right now what we have is a programming language that currently keeps track of declared varibles, basic equalitly and such the following are the things I need to get done in order of prority.
 
-1. I need to write a function that checks/inserts things into the var_table. I have repeated code around and creating a function for this would make things loads easier. 
+*DONE*1. I need to write a function that checks/inserts things into the var_table. I have repeated code around and creating a function for this would make things loads easier. 
 	1a. Need to convert all of my var_table inserts into function calls. (unsure about the return value I belive it can be void).
-2. I need to write var_set to accept var=opperation and have that work out accordingly. I belive that this will work with the temp_container that I write.
-3. After these two I need to create the other opperations. Then discuss with Chappell about creating functions in my generated language to promote readabillity/make things easier for me.
+*DONE*2. I need to write var_set to accept var=opperation and have that work out accordingly. I belive that this will work with the temp_container that I write.
+3. I need to write some sort of print functionallity so that I can check to see if my programs are correct. As of now correct means it compiles. I need somthing a little bit stronger then that.
+4. After these I need to create some other opperations. Then discuss with Chappell about creating functions in my generated language to promote readabillity/make and as a cooler idea.
 4. 
 */
 
@@ -107,6 +108,20 @@ var_set: var_name EQUAL LP number RP
 				output_stream << (string) $1 << " = _mm_setr_ps" << num_stream.str();
 				$$ = strdup((output_stream.str()).c_str());
 
+			}
+| var_name EQUAL opperation
+			{
+				//as of now opperation contains temp container and result container.
+				stringstream output_stream;
+				vector <double> var_value;
+				output_stream << (string) $3;
+				//ONCE AGAIN DO NOT KNOW WHAT TO FILL VEC_VALUE WITH SO JUST FILLING WITH 0's
+				vector_fill(var_value,0,0,0,0);	
+				if(!var_table_check_set((string) $1, var_value))
+					output_stream << "__m128 ";
+				output_stream << (string) $1 << " = result_container;\n";
+			        $$ = strdup((output_stream.str()).c_str());				
+			
 			};
 
 
@@ -153,6 +168,20 @@ opperation:
 				output_stream << "result_container = _mm_add_ps(" << string ($1) << ",temp_container);\n";
 				$$ = strdup((output_stream.str()).c_str());
 
+			}
+	|
+	var_name PLUS var_name
+			{
+				//in this case we allready have our two varibles so we just need our result continer
+				//at this point both var_names should allready be defined in the code
+				stringstream output_stream;
+				vector <double> var_value;
+				//ONCE AGAIN DO NOT KNOW RESULT FILL WITH 0's
+				vector_fill(var_value,0,0,0,0);
+				if(!var_table_check_set("result_container", var_value))
+					output_stream << "__m128 ";
+				output_stream << "result_container = _mm_add_ps(" << (string) $1 << "," << (string) $3 << ");\n";
+				$$ = strdup((output_stream.str()).c_str());
 			};
 
 number: NUMBER 		{

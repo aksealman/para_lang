@@ -1,8 +1,6 @@
 var x:(double)
-
 x = (5)
-
 var y:(double)
-
 y = (1,2,3,4)
-
+var z:(double)
+z=x+y

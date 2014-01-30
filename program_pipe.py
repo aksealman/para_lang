@@ -27,7 +27,12 @@ else:
 	output_file = open(output,'w')
 	#delete all of the file information 
 	output_file.truncate()
+	#Include headers, we might want to find a way to include this in our lexer/parser
 	output_file.write("#include <xmmintrin.h>\n")
+	output_file.write("#include <iostream>\n")
+	output_file.write("using namespace std;\n")
+	output_file.write("float print_float[16];\n")
+	output_file.write("double _m128_result;\n")
 	output_file.write("int main()\n{")
 	#IF WE ARE MISSING THINGS LOOK AT THIS LOOP FIRST HACKED TOGETHER AT BEST
 	for x in xrange(1,len(list_string)-2): 

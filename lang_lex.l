@@ -32,6 +32,10 @@ DIGIT1 [1-9]
 
 "double" 			{return Parser::TYPE;}
 
+"print" 			{return Parser::PRINT;}
+
+"sum"				{return Parser::SUM;}
+
 "("				{return Parser::LP;}
 
 ")"				{return Parser::RP;}

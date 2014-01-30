@@ -42,7 +42,7 @@ extern void vector_fill(vector <double>& var_values, double first, double second
 
 
 
-%token VAR_NAME COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP EQUAL UNKNOWN PLUS MINUS
+%token VAR_NAME COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP EQUAL UNKNOWN PLUS MINUS PRINT SUM
 
 
 
@@ -70,6 +70,11 @@ statement :
 			}
 	|
 	opperation
+			{
+				$$ = $1;
+			}
+	|
+	print_statement
 			{
 				$$ = $1;
 			};
@@ -182,7 +187,34 @@ opperation:
 					output_stream << "__m128 ";
 				output_stream << "result_container = _mm_add_ps(" << (string) $1 << "," << (string) $3 << ");\n";
 				$$ = strdup((output_stream.str()).c_str());
+			}
+	|
+	SUM LP var_name RP
+			{
+				//Need to check and see if this is the most efficient way to compute a sum of an _m128 object
+				stringstream output_stream;
+				output_stream << "_mm_store_ps(print_float," << (string) $3 << ");\n";
+				output_stream << "for(int ii = 0; ii < 4; ++ii)\n{\n_m128_result+=print_float[ii];\n}\ncout << _m128_result << endl;\n_m128_result=0;\n";
+				$$ = strdup((output_stream.str()).c_str());
 			};
+
+print_statement:
+	PRINT var_name
+			{
+				stringstream output_stream;
+				output_stream << "_mm_store_ps(print_float," << (string) $2 << ");\n";
+				output_stream << "for(int ii = 0; ii < 4; ++ii)\n{\n\tcout << print_float[ii] << \" \"; \n}\ncout << endl;";	
+				$$ = strdup((output_stream.str()).c_str());	
+
+			}
+	|
+	PRINT number
+			{
+				stringstream output_stream;
+				output_stream << "cout << " << (string) $2 << " << endl;";
+				$$ = strdup((output_stream.str()).c_str());		
+			};
+
 
 number: NUMBER 		{
 					string temp = lexer.YYText();

@@ -44,6 +44,10 @@ DIGIT1 [1-9]
 
 "-" 				{return Parser::MINUS;}
 
+"\*"				{return Parser::MUL;}
+
+"/"				{return Parser::DIV;}
+
 "="				{return Parser::EQUAL;}
 
 ":"				{return Parser::COLON;}

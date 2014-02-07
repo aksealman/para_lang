@@ -15,12 +15,7 @@ Zak Williams
 
 As of right now what we have is a programming language that currently keeps track of declared varibles, basic equalitly and such the following are the things I need to get done in order of prority.
 
-*DONE*1. I need to write a function that checks/inserts things into the var_table. I have repeated code around and creating a function for this would make things loads easier. 
-	1a. Need to convert all of my var_table inserts into function calls. (unsure about the return value I belive it can be void).
-*DONE*2. I need to write var_set to accept var=opperation and have that work out accordingly. I belive that this will work with the temp_container that I write.
-3. I need to write some sort of print functionallity so that I can check to see if my programs are correct. As of now correct means it compiles. I need somthing a little bit stronger then that.
-4. After these I need to create some other opperations. Then discuss with Chappell about creating functions in my generated language to promote readabillity/make and as a cooler idea.
-4. 
+CURRENT WORK IS GETTING ORDER OF OPERATIONS COMPLETED
 */
 
 %header{
@@ -42,8 +37,8 @@ extern void vector_fill(vector <double>& var_values, double first, double second
 
 
 
-%token VAR_NAME COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP EQUAL UNKNOWN PLUS MINUS PRINT SUM
-
+%token VAR_NAME COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP EQUAL UNKNOWN PRINT SUM
+%left PLUS MINUS MUL DIV
 
 
 
@@ -69,7 +64,7 @@ statement :
 				$$ = $1;
 			}
 	|
-	opperation
+	operation
 			{
 				$$ = $1;
 			}
@@ -114,7 +109,7 @@ var_set: var_name EQUAL LP number RP
 				$$ = strdup((output_stream.str()).c_str());
 
 			}
-| var_name EQUAL opperation
+| var_name EQUAL operation
 			{
 				//as of now opperation contains temp container and result container.
 				stringstream output_stream;
@@ -131,7 +126,7 @@ var_set: var_name EQUAL LP number RP
 
 
 
-var_declare: varible var_name COLON LP type RP
+var_declare: variable var_name COLON LP type RP
 			
 			{
 				vector <double> var_value;
@@ -148,8 +143,18 @@ var_declare: varible var_name COLON LP type RP
 					$$ = "";
 				}
 			};
-opperation:
-	var_name PLUS number	
+operation:
+
+	operation operator var_name
+			{
+				//The result of the most recent opperation is going to be stored in result container (I WILL need to change this for order of opperations just handling x+y+z)
+				stringstream output_stream; 
+				output_stream << string ($1) << "result_container = " << string ($2) << "(" << string ($3) << ",result_container);\n";
+				$$ = strdup((output_stream.str()).c_str());
+
+			}
+	|
+	var_name operator number	
 			{
 				//Step 1 create an __mm128 object containing four numbers 
 				stringstream output_stream;
@@ -170,12 +175,12 @@ opperation:
 				{
 					output_stream << "__m128 ";
 				}	
-				output_stream << "result_container = _mm_add_ps(" << string ($1) << ",temp_container);\n";
+				output_stream << "result_container = " << string ($2) << "(" << string ($1) << ",temp_container);\n";
 				$$ = strdup((output_stream.str()).c_str());
 
 			}
 	|
-	var_name PLUS var_name
+	var_name sum_operator factor
 			{
 				//in this case we allready have our two varibles so we just need our result continer
 				//at this point both var_names should allready be defined in the code
@@ -183,9 +188,10 @@ opperation:
 				vector <double> var_value;
 				//ONCE AGAIN DO NOT KNOW RESULT FILL WITH 0's
 				vector_fill(var_value,0,0,0,0);
+				output_stream << string ($3);
 				if(!var_table_check_set("result_container", var_value))
 					output_stream << "__m128 ";
-				output_stream << "result_container = _mm_add_ps(" << (string) $1 << "," << (string) $3 << ");\n";
+				output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << "result_container" << ");\n";
 				$$ = strdup((output_stream.str()).c_str());
 			}
 	|
@@ -226,7 +232,54 @@ number: NUMBER 		{
 					$$ = strdup(temp.c_str());
 
 			};
-varible: VAR		{
+operator: mul_operator {}
+|
+	  sum_operator {};
+
+factor :var_name mul_operator var_name 
+	{
+				//in this case we allready have our two varibles so we just need our result continer
+				//at this point both var_names should allready be defined in the code
+				stringstream output_stream;
+				vector <double> var_value;
+				//ONCE AGAIN DO NOT KNOW RESULT FILL WITH 0's
+				vector_fill(var_value,0,0,0,0);
+				if(!var_table_check_set("result_container", var_value))
+					output_stream << "__m128 ";
+				output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << (string) $3 << ");\n";
+				$$ = strdup((output_stream.str()).c_str());	
+	};
+
+
+mul_operator:
+ 	MUL 	
+		{
+			string temp = "_mm_mul_ps";
+			$$ = strdup(temp.c_str());
+		}
+|
+	DIV
+		{
+			//WARNING THIS IS VERY SLOW
+			string temp = "_mm_div_ps";
+			$$ = strdup(temp.c_str());
+		};
+
+
+sum_operator:
+	PLUS
+		{
+			string temp = "_mm_add_ps";
+			$$ = strdup(temp.c_str());
+		}
+|
+	MINUS 	
+		{
+			string temp = "_mm_sub_ps";
+			$$ = strdup(temp.c_str());
+		};
+
+variable: VAR		{
 					//need to cast input to a char pointer so that we can push it up
 					string temp = lexer.YYText();
 					$$ = strdup(temp.c_str());

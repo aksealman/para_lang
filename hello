@@ -6,3 +6,9 @@ var z:(double)
 z=x+y
 print z
 sum(z)
+z=x-y
+print z
+z=x*y
+print z
+z = x/y
+print z

@@ -16,6 +16,8 @@ Zak Williams
 As of right now what we have is a programming language that currently keeps track of declared varibles, basic equalitly and such the following are the things I need to get done in order of prority.
 
 CURRENT WORK IS GETTING ORDER OF OPERATIONS COMPLETED
+
+CURRENTLY WORKING I HAVE NO IDEA WHY NEED TO DO SOME CLEANUP AND STUFF
 */
 
 %header{
@@ -64,7 +66,7 @@ statement :
 				$$ = $1;
 			}
 	|
-	operation
+	AddSubExr
 			{
 				$$ = $1;
 			}
@@ -109,7 +111,7 @@ var_set: var_name EQUAL LP number RP
 				$$ = strdup((output_stream.str()).c_str());
 
 			}
-| var_name EQUAL operation
+| var_name EQUAL AddSubExr 
 			{
 				//as of now opperation contains temp container and result container.
 				stringstream output_stream;
@@ -143,9 +145,21 @@ var_declare: variable var_name COLON LP type RP
 					$$ = "";
 				}
 			};
-operation:
+AddSubExr:
 
-	operation operator var_name
+	
+	AddSubExr sum_operator MulDivExr
+			{
+			 	cout << "entered the twlight zone" << endl;
+				cout << endl;
+			}
+	|
+	MulDivExr
+			{
+				
+			}
+	|
+	AddSubExr sum_operator var_name
 			{
 				//The result of the most recent opperation is going to be stored in result container (I WILL need to change this for order of opperations just handling x+y+z)
 				stringstream output_stream; 
@@ -180,7 +194,7 @@ operation:
 
 			}
 	|
-	var_name sum_operator factor
+	var_name sum_operator MulDivExr
 			{
 				//in this case we allready have our two varibles so we just need our result continer
 				//at this point both var_names should allready be defined in the code
@@ -236,7 +250,18 @@ operator: mul_operator {}
 |
 	  sum_operator {};
 
-factor :var_name mul_operator var_name 
+MulDivExr:
+	MulDivExr mul_operator var_name
+	{
+		//Eventually turn var_name into factor? This is so parenthsis will work
+		stringstream output_stream;
+		output_stream << string ($1);
+		output_stream << "result_container = " << string ($2) << "(result_container," << string ($3) << ");\n";
+		$$ = strdup((output_stream.str()).c_str());
+			
+	}
+	|
+	var_name mul_operator var_name 
 	{
 				//in this case we allready have our two varibles so we just need our result continer
 				//at this point both var_names should allready be defined in the code
@@ -248,7 +273,9 @@ factor :var_name mul_operator var_name
 					output_stream << "__m128 ";
 				output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << (string) $3 << ");\n";
 				$$ = strdup((output_stream.str()).c_str());	
-	};
+	}
+	|
+	var_name{};
 
 
 mul_operator:

@@ -34,6 +34,7 @@ CURRENTLY WORKING I HAVE NO IDEA WHY NEED TO DO SOME CLEANUP AND STUFF
 using namespace std;
 extern unordered_map <string, vector <double>> var_table;
 extern bool var_table_check_set(string var_name, vector<double>& var_values);
+extern bool var_table_check(string var_name);
 extern void vector_fill(vector <double>& var_values, double first, double second, double third, double forth); 
 %}
 
@@ -142,81 +143,63 @@ var_declare: variable var_name COLON LP type RP
 				//if we reach here we have a syntatic error and must abort I am unsure how to do this yet.
 				else
 				{
+				
 					$$ = "";
 				}
 			};
 AddSubExr:
-
-	
+	MulDivExr      {}
+	|
 	AddSubExr sum_operator MulDivExr
 			{
-			 	cout << "entered the twlight zone" << endl;
-				cout << endl;
-			}
-	|
-	MulDivExr
-			{
-				
-			}
-	|
-	AddSubExr sum_operator var_name
-			{
-				//The result of the most recent opperation is going to be stored in result container (I WILL need to change this for order of opperations just handling x+y+z)
-				stringstream output_stream; 
-				output_stream << string ($1) << "result_container = " << string ($2) << "(" << string ($3) << ",result_container);\n";
-				$$ = strdup((output_stream.str()).c_str());
-
-			}
-	|
-	var_name operator number	
-			{
-				//Step 1 create an __mm128 object containing four numbers 
-				stringstream output_stream;
-				stringstream num_stream;
-				num_stream << string ($3) << ",";
-				vector <double> vec_value;
-				vector_fill(vec_value, (double) $3, (double) $3, (double) $3, (double) $3);
-				if(!var_table_check_set("temp_container", vec_value))
-					output_stream << "__m128 ";
-				output_stream << "temp_container = _mm_setr_ps(";
-				for(int ii = 0; ii < 3; ++ii)
-						output_stream << num_stream.str();
-				output_stream << string ($3) << ");\n";
-				//Step 2 Create a result container (should be created before this proof of concept) for the addition to be carried in
-				//CURRENTLY FILLING RESULT CONTAINER WITH 0's AS I DO NOT KNOW THE SIGNIFICANCE OF CALCULATING THE VALUE OF IT.
-				vector_fill(vec_value,0,0,0,0);
-				if(!var_table_check_set("result_container", vec_value))
-				{
-					output_stream << "__m128 ";
-				}	
-				output_stream << "result_container = " << string ($2) << "(" << string ($1) << ",temp_container);\n";
-				$$ = strdup((output_stream.str()).c_str());
-
-			}
-	|
-	var_name sum_operator MulDivExr
-			{
-				//in this case we allready have our two varibles so we just need our result continer
-				//at this point both var_names should allready be defined in the code
-				stringstream output_stream;
+			 	stringstream output_stream;
 				vector <double> var_value;
-				//ONCE AGAIN DO NOT KNOW RESULT FILL WITH 0's
 				vector_fill(var_value,0,0,0,0);
-				output_stream << string ($3);
-				if(!var_table_check_set("result_container", var_value))
-					output_stream << "__m128 ";
-				output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << "result_container" << ");\n";
+				//$1 is not a varible then it is an operation, which should be on its own line
+				if(!var_table_check(string ($1)))
+				{
+					output_stream << string ($1); 
+					output_stream << "result_container = " << string ($2) << "(result_container," << string ($3) << ");\n";
+				}
+				else if(!var_table_check(string ($3)))
+				{
+					output_stream << string ($3); 
+					output_stream << "result_container = " << string ($2) << "(result_container," << string ($1) << ");\n";
+				}
+				else
+				{
+					if(!var_table_check_set("result_container", var_value))
+						output_stream << "__m128 ";
+					output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";
+				}
 				$$ = strdup((output_stream.str()).c_str());
-			}
-	|
-	SUM LP var_name RP
-			{
-				//Need to check and see if this is the most efficient way to compute a sum of an _m128 object
-				stringstream output_stream;
-				output_stream << "_mm_store_ps(print_float," << (string) $3 << ");\n";
-				output_stream << "for(int ii = 0; ii < 4; ++ii)\n{\n_m128_result+=print_float[ii];\n}\ncout << _m128_result << endl;\n_m128_result=0;\n";
-				$$ = strdup((output_stream.str()).c_str());
+
 			};
+
+MulDivExr:
+	MulDivExr mul_operator term
+	{
+		//Eventually turn var_name into factor? This is so parenthsis will work
+		stringstream output_stream;
+		vector <double> var_value;
+		vector_fill(var_value,0,0,0,0);
+		if(!var_table_check(string ($1)))
+		{
+			output_stream << string ($1); 
+			output_stream << "result_container = " << string ($2) << "(result_container," << string ($3) << ");\n";
+		}	
+		else
+		{
+			if(!var_table_check_set("result_container", var_value))
+				output_stream << "__m128 ";
+			output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";
+		}
+		$$ = strdup((output_stream.str()).c_str());
+			
+	}
+	|
+	var_name{};
+
 
 print_statement:
 	PRINT var_name
@@ -250,32 +233,6 @@ operator: mul_operator {}
 |
 	  sum_operator {};
 
-MulDivExr:
-	MulDivExr mul_operator var_name
-	{
-		//Eventually turn var_name into factor? This is so parenthsis will work
-		stringstream output_stream;
-		output_stream << string ($1);
-		output_stream << "result_container = " << string ($2) << "(result_container," << string ($3) << ");\n";
-		$$ = strdup((output_stream.str()).c_str());
-			
-	}
-	|
-	var_name mul_operator var_name 
-	{
-				//in this case we allready have our two varibles so we just need our result continer
-				//at this point both var_names should allready be defined in the code
-				stringstream output_stream;
-				vector <double> var_value;
-				//ONCE AGAIN DO NOT KNOW RESULT FILL WITH 0's
-				vector_fill(var_value,0,0,0,0);
-				if(!var_table_check_set("result_container", var_value))
-					output_stream << "__m128 ";
-				output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << (string) $3 << ");\n";
-				$$ = strdup((output_stream.str()).c_str());	
-	}
-	|
-	var_name{};
 
 
 mul_operator:
@@ -330,7 +287,7 @@ This function will check to see if the value var_name exsits in our global var_t
 */
 bool var_table_check_set(string var_name, vector <double> &var_values)
 {	
-	if(var_table.find(var_name) == var_table.end())
+	if(!var_table_check(var_name))
 	{
 		for(int ii = 0; ii < 4; ++ii)
 		{
@@ -348,6 +305,11 @@ bool var_table_check_set(string var_name, vector <double> &var_values)
 	}
 }
 
+bool var_table_check(string var_name)
+{
+	//return false if not found
+	return !(var_table.find(var_name) == var_table.end());
+}
 //filles a vector of with values first,second,thrid and forth. Could do this via initilizer list but this is cleaner.
 //var_values should be an empty vector otherwise this program will not work
 void vector_fill(vector <double> & var_values, double first,double second, double third, double forth)

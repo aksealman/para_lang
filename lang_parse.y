@@ -15,9 +15,7 @@ Zak Williams
 
 As of right now what we have is a programming language that currently keeps track of declared varibles, basic equalitly and such the following are the things I need to get done in order of prority.
 
-CURRENT WORK IS GETTING ORDER OF OPERATIONS COMPLETED
-
-CURRENTLY WORKING I HAVE NO IDEA WHY NEED TO DO SOME CLEANUP AND STUFF
+Have order of opperations completed, I now need to handle parentheses
 */
 
 %header{
@@ -25,7 +23,9 @@ CURRENTLY WORKING I HAVE NO IDEA WHY NEED TO DO SOME CLEANUP AND STUFF
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef YY_INTERACTIVE
 #include <FlexLexer.h>
+#endif
 #include <string>
 #include <string.h>
 #include <vector>
@@ -35,7 +35,7 @@ using namespace std;
 extern unordered_map <string, vector <double>> var_table;
 extern bool var_table_check_set(string var_name, vector<double>& var_values);
 extern bool var_table_check(string var_name);
-extern void vector_fill(vector <double>& var_values, double first, double second, double third, double forth); 
+extern void vector_fill(vector <double>& var_values, double first, double second, double third, double forth);
 %}
 
 
@@ -67,7 +67,7 @@ statement :
 				$$ = $1;
 			}
 	|
-	AddSubExr
+	add_sub_exr
 			{
 				$$ = $1;
 			}
@@ -112,7 +112,7 @@ var_set: var_name EQUAL LP number RP
 				$$ = strdup((output_stream.str()).c_str());
 
 			}
-| var_name EQUAL AddSubExr 
+| var_name EQUAL add_sub_exr 
 			{
 				//as of now opperation contains temp container and result container.
 				stringstream output_stream;
@@ -147,10 +147,10 @@ var_declare: variable var_name COLON LP type RP
 					$$ = "";
 				}
 			};
-AddSubExr:
-	MulDivExr      {}
+add_sub_exr:
+	mul_div_exr      {}
 	|
-	AddSubExr sum_operator MulDivExr
+	add_sub_exr sum_operator mul_div_exr
 			{
 			 	stringstream output_stream;
 				vector <double> var_value;
@@ -170,19 +170,22 @@ AddSubExr:
 				{
 					if(!var_table_check_set("result_container", var_value))
 						output_stream << "__m128 ";
-					output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";
+					output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";					
 				}
 				$$ = strdup((output_stream.str()).c_str());
 
 			};
 
-MulDivExr:
-	MulDivExr mul_operator term
+mul_div_exr:
+	term {}
+	|
+	mul_div_exr mul_operator term
 	{
 		//Eventually turn var_name into factor? This is so parenthsis will work
 		stringstream output_stream;
 		vector <double> var_value;
 		vector_fill(var_value,0,0,0,0);
+		//If this condition is filled that means $1 is code
 		if(!var_table_check(string ($1)))
 		{
 			output_stream << string ($1); 
@@ -196,9 +199,17 @@ MulDivExr:
 		}
 		$$ = strdup((output_stream.str()).c_str());
 			
+	};
+term: 
+	LP add_sub_exr RP
+	{
+		stringstream output_stream;
+		output_stream << string ($2);
+		$$ = strdup((output_stream.str()).c_str());
 	}
 	|
-	var_name{};
+	var_name 
+	{};
 
 
 print_statement:
@@ -229,12 +240,6 @@ number: NUMBER 		{
 					$$ = strdup(temp.c_str());
 
 			};
-operator: mul_operator {}
-|
-	  sum_operator {};
-
-
-
 mul_operator:
  	MUL 	
 		{
@@ -310,9 +315,9 @@ bool var_table_check(string var_name)
 	//return false if not found
 	return !(var_table.find(var_name) == var_table.end());
 }
-//filles a vector of with values first,second,thrid and forth. Could do this via initilizer list but this is cleaner.
-//var_values should be an empty vector otherwise this program will not work
-void vector_fill(vector <double> & var_values, double first,double second, double third, double forth)
+
+
+void vector_fill(vector <double> & var_values, double first, double second, double third, double forth)
 {
 	var_values = {first,second,third,forth};
 }

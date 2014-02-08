@@ -8,7 +8,7 @@ parser.cpp:
 	bison++ -d -hparser.h -oparser.cpp lang_parse.y 
 
 lexer.o: scanner.cpp
-	g++ -c -o lexer.o scanner.cpp -fpermissive -w -lfl -std=c++0x
+	g++ -c -o lexer.o scanner.cpp -fpermissive -lfl -w -std=c++0x
 
 
 scanner.cpp:

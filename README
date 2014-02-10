@@ -1,0 +1,33 @@
+README
+
+This is a very basic readme. I will eventally turn this into an HTML document.
+
+How to build.
+
+The following need to be installed in order to make compile the project
+
+Flex++
+Bison++
+g++ 
+make
+python 2.7
+
+From there you should just need to run make and the code should build
+
+How to run.
+
+You will need to use program_pipe.py to run your code. program_pipe.py takes an input and output file on the command line as parameters.
+
+thus an example useage would be
+
+python program_pipe.py hello goodbye.cpp
+
+you would then compile goodbye.cpp the following way
+
+g++ goodbye.cpp -msse
+
+This will generate a a.out file which uses paralell code.
+
+Bug Reports
+
+Please email me at zrwilliams2@alaska.edu for any bugs encountered while generating/writing code

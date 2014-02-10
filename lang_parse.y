@@ -241,11 +241,29 @@ mul_div_exr:
 		vector_fill(var_value,0,0,0,0);
 		stringstream trial_stream;
 		//If this condition is filled that means $1 is code
-		if(!var_table_check(string ($1)))
+		//Need to check term as well, also means we need to check both
+		if(!var_table_check(string($1)) && !var_table_check(string($3)))
+		{
+			if(!var_table_check_set("result_container", var_value))
+				output_stream << "__m128 ";
+			output_stream << "result_container = " << string ($2) << "(" << par_table.front() << ",";
+			trial_stream << string ($2) << "(" << par_table.front() << ",";
+			par_table_pop();
+			trial_stream << par_table.front() << ")";
+			output_stream << par_table.front() << ");\n";
+			par_table_pop();	
+		}
+		else if(!var_table_check(string ($1)))
 		{	
 			//output_stream << string ($1);
 			output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($3) << ");\n";
 			trial_stream << string ($2) << "(" << par_table.front() << "," << string ($3) << ")";	
+			par_table_pop();
+		}
+		else if(!var_table_check(string ($3)))
+		{
+			output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($1) << ");\n";
+			trial_stream << string ($2) << "(" << par_table.front() << "," << string ($1) << ")";	
 			par_table_pop();
 		}	
 		else

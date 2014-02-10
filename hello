@@ -2,13 +2,12 @@ var x:(double)
 x = (5)
 var y:(double)
 y = (1,2,3,4)
+var a:(double)
+a = (1)
 var z:(double)
-z=x+y
-print z
-sum(z)
-z=x-y
-print z
-z=x*y
-print z
-z = x/y
-print z
+z = x+y
+z = x*y
+z = x+y*z
+z = x*y+z
+z = x*(y+z)
+z = x*y+(z+z)+z

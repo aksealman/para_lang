@@ -16,11 +16,19 @@ Zak Williams
 As of right now what we have is a programming language that currently keeps track of declared varibles, basic equalitly and such the following are the things I need to get done in order of prority.
 
 Have order of opperations completed, I now need to handle parentheses
+
+IDEA: have a master grammar that calls add_sub_exp. add_sub_exp, mul_div_exp, and par all push there "results" onto the queue. They will not return anything we will handle it on in our queue.
+This master grammar will then plow through the queue and proceed to write everything to the output stream, this will be the return value. The idea behind this is that a queue is the perfect construct to handle the order in which the operations should be executed with. I am unsure if this will work or not but we shall see!
+
+Currently works! Just need more storage then reslut_container. Or some way to put JUST the operataions inside. Not sure is _mm_add_ps(_mm_mul_ps(x,y), _mm_sub_ps(y,z)) is valid syntax or not. If it is then we do not need a stack of expected values we just need a super nested convoluted statment. 
+
+Need to create result container as a global so that we can access it. It will cut down on code 
 */
 
 %header{
 #include <iostream>
 #include <fstream>
+#include <queue>
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef YY_INTERACTIVE
@@ -33,8 +41,11 @@ Have order of opperations completed, I now need to handle parentheses
 #include <unordered_map>
 using namespace std;
 extern unordered_map <string, vector <double>> var_table;
+extern queue <string> par_table;
 extern bool var_table_check_set(string var_name, vector<double>& var_values);
 extern bool var_table_check(string var_name);
+extern void par_table_push(string x);
+extern void par_table_pop();
 extern void vector_fill(vector <double>& var_values, double first, double second, double third, double forth);
 %}
 
@@ -57,9 +68,26 @@ expression : |
 	
 statement :
 	var_set           
-			{				
+			{	
+/*				//if par_table.size is not zero			
+	
+				if(par_table.size())
+				{	
+					stringstream output_stream;
+					while(par_table.size() != 0)
+					{
+						output_stream << par_table.front();
+						par_table.pop();		
+					}
+					output_stream << string ($1);
+					$$ = strdup((output_stream.str()).c_str());
+				}
+*/
+				//Continue to work as normal
+//			else
+//			{
 				$$ = $1;
-
+//			}
 			}
 	|
 	var_declare 
@@ -123,6 +151,7 @@ var_set: var_name EQUAL LP number RP
 				if(!var_table_check_set((string) $1, var_value))
 					output_stream << "__m128 ";
 				output_stream << (string) $1 << " = result_container;\n";
+				par_table_pop();
 			        $$ = strdup((output_stream.str()).c_str());				
 			
 			};
@@ -155,23 +184,48 @@ add_sub_exr:
 			 	stringstream output_stream;
 				vector <double> var_value;
 				vector_fill(var_value,0,0,0,0);
+				stringstream trial_stream;
 				//$1 is not a varible then it is an operation, which should be on its own line
-				if(!var_table_check(string ($1)))
-				{
-					output_stream << string ($1); 
-					output_stream << "result_container = " << string ($2) << "(result_container," << string ($3) << ");\n";
-				}
-				else if(!var_table_check(string ($3)))
-				{
-					output_stream << string ($3); 
-					output_stream << "result_container = " << string ($2) << "(result_container," << string ($1) << ");\n";
-				}
-				else
+				if(!var_table_check(string ($1)) && !var_table_check(string ($3)))
 				{
 					if(!var_table_check_set("result_container", var_value))
 						output_stream << "__m128 ";
-					output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";					
+					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << ",";
+					trial_stream << string ($2) << "(" << par_table.front() << ",";
+					par_table_pop();
+					trial_stream << par_table.front() << ")";
+					output_stream << par_table.front() << ");\n";
+					par_table_pop();
 				}
+				else if(!var_table_check(string ($1)))
+				{	
+			//		output_stream << string ($1); 
+		//			cout << "we triggered string $1 " << endl;
+		//			cout << par_table.front() << endl;
+		//			cout << endl;
+					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($3) << ");\n";
+					trial_stream << string ($2) << "(" << par_table.front() << "," << string ($3) << ")";
+					par_table_pop();
+				}
+				else if(!var_table_check(string ($3)))
+				{
+			//		output_stream << string ($3);
+		//			cout << "we triggered string $3 " << endl;
+		//			cout << par_table.front() << endl;
+		//			cout << endl;
+					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($1) << ");\n";
+					trial_stream << string ($2) << "(" << par_table.front() << "," << string ($1) << ")";
+					par_table_pop();
+				}
+				else
+				{
+					//both are varibles
+					if(!var_table_check_set("result_container", var_value))
+						output_stream << "__m128 ";
+					output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";	
+					trial_stream << string ($2) << "(" << string ($1) << "," << string ($3) << ")";
+				}
+				par_table_push(trial_stream.str());
 				$$ = strdup((output_stream.str()).c_str());
 
 			};
@@ -185,18 +239,24 @@ mul_div_exr:
 		stringstream output_stream;
 		vector <double> var_value;
 		vector_fill(var_value,0,0,0,0);
+		stringstream trial_stream;
 		//If this condition is filled that means $1 is code
 		if(!var_table_check(string ($1)))
-		{
-			output_stream << string ($1); 
-			output_stream << "result_container = " << string ($2) << "(result_container," << string ($3) << ");\n";
+		{	
+			//output_stream << string ($1);
+			output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($3) << ");\n";
+			trial_stream << string ($2) << "(" << par_table.front() << "," << string ($3) << ")";	
+			par_table_pop();
 		}	
 		else
 		{
 			if(!var_table_check_set("result_container", var_value))
 				output_stream << "__m128 ";
 			output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";
+			trial_stream << string ($2) << "(" << string ($1) << "," << string ($3) << ")";
 		}
+	//	cout << "push from mul_div_exr" << endl;
+		par_table_push(trial_stream.str());
 		$$ = strdup((output_stream.str()).c_str());
 			
 	};
@@ -286,7 +346,7 @@ var_name : VAR_NAME	{
 %%
 
 unordered_map <string, vector <double>> var_table;
-
+queue <string> par_table;
 /*
 This function will check to see if the value var_name exsits in our global var_table as well as set the value of var_table to our vector we passed in
 */
@@ -316,7 +376,20 @@ bool var_table_check(string var_name)
 	return !(var_table.find(var_name) == var_table.end());
 }
 
-
+void par_table_push(string x)
+{
+//	cout << "pushing" << endl;
+//	cout << x << endl;
+//	cout << endl;
+	par_table.push(x);
+}
+void par_table_pop()
+{
+//	cout << "popping" << endl;
+//	cout << par_table.front() << endl;
+//	cout << endl;
+	par_table.pop();
+}
 void vector_fill(vector <double> & var_values, double first, double second, double third, double forth)
 {
 	var_values = {first,second,third,forth};

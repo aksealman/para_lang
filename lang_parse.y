@@ -188,8 +188,8 @@ add_sub_exr:
 				//$1 is not a varible then it is an operation, which should be on its own line
 				if(!var_table_check(string ($1)) && !var_table_check(string ($3)))
 				{
-					if(!var_table_check_set("result_container", var_value))
-						output_stream << "__m128 ";
+//					if(!var_table_check_set("result_container", var_value))
+//						output_stream << "__m128 ";
 					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << ",";
 					trial_stream << string ($2) << "(" << par_table.front() << ",";
 					par_table_pop();
@@ -220,8 +220,8 @@ add_sub_exr:
 				else
 				{
 					//both are varibles
-					if(!var_table_check_set("result_container", var_value))
-						output_stream << "__m128 ";
+//					if(!var_table_check_set("result_container", var_value))
+//						output_stream << "__m128 ";
 					output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";	
 					trial_stream << string ($2) << "(" << string ($1) << "," << string ($3) << ")";
 				}
@@ -244,8 +244,8 @@ mul_div_exr:
 		//Need to check term as well, also means we need to check both
 		if(!var_table_check(string($1)) && !var_table_check(string($3)))
 		{
-			if(!var_table_check_set("result_container", var_value))
-				output_stream << "__m128 ";
+//			if(!var_table_check_set("result_container", var_value))
+//				output_stream << "__m128 ";
 			output_stream << "result_container = " << string ($2) << "(" << par_table.front() << ",";
 			trial_stream << string ($2) << "(" << par_table.front() << ",";
 			par_table_pop();
@@ -268,8 +268,8 @@ mul_div_exr:
 		}	
 		else
 		{
-			if(!var_table_check_set("result_container", var_value))
-				output_stream << "__m128 ";
+//			if(!var_table_check_set("result_container", var_value))
+//				output_stream << "__m128 ";
 			output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";
 			trial_stream << string ($2) << "(" << string ($1) << "," << string ($3) << ")";
 		}

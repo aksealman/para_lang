@@ -1,0 +1,15 @@
+var x : (double)
+var y : (double)
+var z : (double)
+
+x = (1,2,3,4)
+y = (1)
+
+z = x+y
+print z 
+z = x*y
+print z
+z = y*(+y)
+print z
+z = (x+y)*(x+y)
+print z

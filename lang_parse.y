@@ -22,7 +22,7 @@ This master grammar will then plow through the queue and proceed to write everyt
 
 Currently works! Just need more storage then reslut_container. Or some way to put JUST the operataions inside. Not sure is _mm_add_ps(_mm_mul_ps(x,y), _mm_sub_ps(y,z)) is valid syntax or not. If it is then we do not need a stack of expected values we just need a super nested convoluted statment. 
 
-Need to create result container as a global so that we can access it. It will cut down on code 
+Need to create result container as a global so that we can access it. It will cut down on code **DONE** 
 */
 
 %header{
@@ -68,26 +68,8 @@ expression : |
 	
 statement :
 	var_set           
-			{	
-/*				//if par_table.size is not zero			
-	
-				if(par_table.size())
-				{	
-					stringstream output_stream;
-					while(par_table.size() != 0)
-					{
-						output_stream << par_table.front();
-						par_table.pop();		
-					}
-					output_stream << string ($1);
-					$$ = strdup((output_stream.str()).c_str());
-				}
-*/
-				//Continue to work as normal
-//			else
-//			{
-				$$ = $1;
-//			}
+			{
+				$$ = $1
 			}
 	|
 	var_declare 
@@ -188,8 +170,6 @@ add_sub_exr:
 				//$1 is not a varible then it is an operation, which should be on its own line
 				if(!var_table_check(string ($1)) && !var_table_check(string ($3)))
 				{
-//					if(!var_table_check_set("result_container", var_value))
-//						output_stream << "__m128 ";
 					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << ",";
 					trial_stream << string ($2) << "(" << par_table.front() << ",";
 					par_table_pop();
@@ -199,29 +179,18 @@ add_sub_exr:
 				}
 				else if(!var_table_check(string ($1)))
 				{	
-			//		output_stream << string ($1); 
-		//			cout << "we triggered string $1 " << endl;
-		//			cout << par_table.front() << endl;
-		//			cout << endl;
 					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($3) << ");\n";
 					trial_stream << string ($2) << "(" << par_table.front() << "," << string ($3) << ")";
 					par_table_pop();
 				}
 				else if(!var_table_check(string ($3)))
 				{
-			//		output_stream << string ($3);
-		//			cout << "we triggered string $3 " << endl;
-		//			cout << par_table.front() << endl;
-		//			cout << endl;
 					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($1) << ");\n";
 					trial_stream << string ($2) << "(" << par_table.front() << "," << string ($1) << ")";
 					par_table_pop();
 				}
 				else
 				{
-					//both are varibles
-//					if(!var_table_check_set("result_container", var_value))
-//						output_stream << "__m128 ";
 					output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";	
 					trial_stream << string ($2) << "(" << string ($1) << "," << string ($3) << ")";
 				}
@@ -244,8 +213,6 @@ mul_div_exr:
 		//Need to check term as well, also means we need to check both
 		if(!var_table_check(string($1)) && !var_table_check(string($3)))
 		{
-//			if(!var_table_check_set("result_container", var_value))
-//				output_stream << "__m128 ";
 			output_stream << "result_container = " << string ($2) << "(" << par_table.front() << ",";
 			trial_stream << string ($2) << "(" << par_table.front() << ",";
 			par_table_pop();
@@ -268,12 +235,9 @@ mul_div_exr:
 		}	
 		else
 		{
-//			if(!var_table_check_set("result_container", var_value))
-//				output_stream << "__m128 ";
 			output_stream << "result_container = " << string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";
 			trial_stream << string ($2) << "(" << string ($1) << "," << string ($3) << ")";
 		}
-	//	cout << "push from mul_div_exr" << endl;
 		par_table_push(trial_stream.str());
 		$$ = strdup((output_stream.str()).c_str());
 			

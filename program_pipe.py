@@ -40,4 +40,4 @@ else:
 		output_file.write("\n")
 	output_file.write("}\n")
 	
-
+	p3 = subprocess.Popen(["g++", output, "-msse"], stdout=subprocess.PIPE)

@@ -9,7 +9,7 @@ z = x+y
 print z 
 z = x*y
 print z
-z = y*(+y)
+z = y+(x+y)
 print z
 z = (x+y)*(x+y)
 print z

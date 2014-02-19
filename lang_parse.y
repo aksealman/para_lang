@@ -13,16 +13,9 @@
 ********************************************TODO***************************************
 Zak Williams
 
-As of right now what we have is a programming language that currently keeps track of declared varibles, basic equalitly and such the following are the things I need to get done in order of prority.
+THe next step I need to implment is a constant loop. This is essencially going to be a big stupid loop that only loops over items a constant amount of times. (hardset at 1000). This is just to get a baseline loop implemented in the language so that people can build on it in the future.
 
-Have order of opperations completed, I now need to handle parentheses
-
-IDEA: have a master grammar that calls add_sub_exp. add_sub_exp, mul_div_exp, and par all push there "results" onto the queue. They will not return anything we will handle it on in our queue.
-This master grammar will then plow through the queue and proceed to write everything to the output stream, this will be the return value. The idea behind this is that a queue is the perfect construct to handle the order in which the operations should be executed with. I am unsure if this will work or not but we shall see!
-
-Currently works! Just need more storage then reslut_container. Or some way to put JUST the operataions inside. Not sure is _mm_add_ps(_mm_mul_ps(x,y), _mm_sub_ps(y,z)) is valid syntax or not. If it is then we do not need a stack of expected values we just need a super nested convoluted statment. 
-
-Need to create result container as a global so that we can access it. It will cut down on code **DONE** 
+After this is working we want to get some baseline if statments working, and then expand upon them. 
 */
 
 %header{
@@ -51,7 +44,7 @@ extern void vector_fill(vector <double>& var_values, double first, double second
 
 
 
-%token VAR_NAME COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP EQUAL UNKNOWN PRINT SUM
+%token VAR_NAME COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP EQUAL UNKNOWN PRINT SUM LOOP LB RB
 %left PLUS MINUS MUL DIV
 
 
@@ -62,14 +55,20 @@ program : expression   {};
 expression : |
 	expression statement
 			 { 
-				string temp = $2;	
+				string temp = $2;
 				cout << temp << endl;
+				$$ = strdup(temp.c_str());
 			 }
 	
 statement :
+	loop_statement
+			{
+				$$ = $1;
+			}
+	|
 	var_set           
 			{
-				$$ = $1
+				$$ = $1;
 			}
 	|
 	var_declare 
@@ -252,6 +251,14 @@ term:
 	|
 	var_name 
 	{};
+loop_statement:
+	LOOP LB expression RB
+		{
+			stringstream output_stream;
+			output_stream << "for(int ii=0; ii < 1000; ++ii)\n{\n" << string ($3) << "}\n";	
+			$$ = strdup((output_stream.str()).c_str());
+		};
+ 
 
 
 print_statement:
@@ -312,8 +319,8 @@ sum_operator:
 
 variable: VAR		{
 					//need to cast input to a char pointer so that we can push it up
-					string temp = lexer.YYText();
-					$$ = strdup(temp.c_str());
+				string temp = lexer.YYText();
+				$$ = strdup(temp.c_str());
 			};
 
 type : TYPE		{

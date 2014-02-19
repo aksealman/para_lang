@@ -36,6 +36,12 @@ DIGIT1 [1-9]
 
 "sum"				{return Parser::SUM;}
 
+"loop"				{return Parser::LOOP;}
+
+"{"				{return Parser::LB;}
+
+"}"				{return Parser::RB;}
+
 "("				{return Parser::LP;}
 
 ")"				{return Parser::RP;}

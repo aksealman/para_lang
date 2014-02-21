@@ -5,7 +5,7 @@ parser.o: parser.cpp
 	g++ -c -o parser.o parser.cpp -fpermissive -w -lfl -std=c++0x
 
 parser.cpp:
-	bison++ -d -hparser.h -oparser.cpp lang_parse.y 
+	bison++ -d -v -hparser.h -oparser.cpp lang_parse.y 
 
 lexer.o: scanner.cpp
 	g++ -c -o lexer.o scanner.cpp -fpermissive -lfl -w -std=c++0x

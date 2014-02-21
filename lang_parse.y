@@ -55,7 +55,7 @@ program : expression   {};
 expression : |
 	expression statement
 			 { 
-				string temp = $2;
+				string temp = string ($2);
 				cout << temp << endl;
 				$$ = strdup(temp.c_str());
 			 }
@@ -252,13 +252,23 @@ term:
 	var_name 
 	{};
 loop_statement:
-	LOOP LB expression RB
+	LOOP LB loop_expression RB
 		{
 			stringstream output_stream;
 			output_stream << "for(int ii=0; ii < 1000; ++ii)\n{\n" << string ($3) << "}\n";	
 			$$ = strdup((output_stream.str()).c_str());
 		};
- 
+loop_expression:
+	|
+	loop_expression statement 
+		{
+			stringstream output_stream;
+			output_stream << string ($1) << string ($2);
+			$$ = strdup((output_stream.str()).c_str());
+		}
+	|
+	statement {};
+
 
 
 print_statement:

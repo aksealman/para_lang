@@ -265,9 +265,7 @@ loop_expression:
 			stringstream output_stream;
 			output_stream << string ($1) << string ($2);
 			$$ = strdup((output_stream.str()).c_str());
-		}
-	|
-	statement {};
+		};
 
 
 

@@ -22,6 +22,7 @@ What we do right now for single line if statements is push two elements onto the
 So what we can attempt to do for multi line if statements is create an if and else clause. Inside both of these clauses we push all of the varibles into a map or somthing. We have two maps. If a varible is in one map but not the other then we execute our first case. If they are both the same then we execute our second case. This has some potential to lead into problems with differnet sized if statements but we will cross that bridge when we come to it.
 
 This is my next train of thought. I will try doing this tommrow with another branch on git, and see how it plays out. I do not belive that I will have it implemented in time for dr chappell.
+
 */
 
 %header{
@@ -41,6 +42,8 @@ This is my next train of thought. I will try doing this tommrow with another bra
 #include <unordered_map>
 using namespace std;
 extern unordered_map <string, vector <double>> var_table;
+extern unordered_map <string, bool> table_1;
+extern unordered_map <string, bool> table_2;
 extern queue <string> par_table;
 extern stack <string> var_name_table;
 extern bool var_table_check_set(string var_name, const vector<double>& var_values);
@@ -285,7 +288,7 @@ loop_statement:
 			$$ = strdup((output_stream.str()).c_str());
 		};
 if_statement:
-	IF conditional LB conditional_expression RB ELSE LB conditional_expression RB
+	IF conditional LB then_expression RB ELSE LB else_expression RB
 	{
 		/*Huge set of steps we need to execute here
 		STEP 1. Create a mask of type conditional since we have mask included by default we do not need to reinit mask (_m128) **DONE**
@@ -332,8 +335,8 @@ conditional:
 			output_stream << "mask = "<< string ($3) << "(" << string ($2) << "," << string ($4) << ");\n";
 			$$ = strdup((output_stream.str()).c_str());
 		};
-conditional_expression:	
-	conditional_expression if_var_set
+then_expression:	
+	then_expression if_var_set_then
 		{
 			cout << var_name_table.size() << endl;
 			/*Time to construct a string*/
@@ -349,9 +352,26 @@ conditional_expression:
 
 		}
 	|
-	if_var_set{};
+	if_var_set_then{};
 
+else_expression:	
+	else_expression if_var_set_else
+		{
+			cout << var_name_table.size() << endl;
+			/*Time to construct a string*/
+			cout << string ($1) << endl;
+			cout << endl;
+			cout << string ($2) << endl;
+			cout << endl;			
+			cout << "end here" << endl;
 
+			stringstream output_stream;
+			output_stream << string ($2);
+			$$ = strdup((output_stream.str()).c_str());
+
+		}
+	|
+	if_var_set_else{};
 
 
 print_statement:

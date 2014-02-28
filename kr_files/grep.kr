@@ -1,0 +1,15 @@
+var x : (double)
+var y : (double)
+var z : (double)
+var w : (double)
+var q : (double)
+var a : (double)
+
+x=(5)
+y=(1)
+z=(2)
+w =(1,2,3,4)
+q = (6)
+a = x+y*z/w+q
+
+print a

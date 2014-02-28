@@ -5,8 +5,10 @@ y = (1,2,3,4)
 var a:(double)
 a = (1)
 var z:(double)
+z = x
 z = x*(y+z)
 z = x*y+(z+z)+z
 z = x*y+(z+z)+z*x+x
 z = (x+(y+(z*x)*x))
 z = (x+y)*(y+z)
+z = (x+y-z)*x+z+(x/(y+z*x)+x)*y*z

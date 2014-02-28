@@ -1,0 +1,12 @@
+var x : (double)
+var y : (double)
+
+
+x=(1)
+y=(1)
+loop
+{
+	x = x+y
+	print x
+}
+print x

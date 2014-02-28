@@ -38,6 +38,16 @@ DIGIT1 [1-9]
 
 "loop"				{return Parser::LOOP;}
 
+"if"				{return Parser::IF;}
+
+"else"				{return Parser::ELSE;}
+
+"<" 				{return Parser::LT;}
+
+">"				{return Parser::GT;}
+
+"=="				{return Parser::DEQUAL;}
+
 "{"				{return Parser::LB;}
 
 "}"				{return Parser::RB;}

@@ -32,7 +32,7 @@ else:
 	output_file.write("#include <iostream>\n")
 	output_file.write("using namespace std;\n")
 	output_file.write("float print_float[16];\n")
-	output_file.write("int main()\n{\n\t__m128 result_container;\n")
+	output_file.write("int main()\n{\n\t__m128 result_container;\n\t__m128 mask;\n")
 	#IF WE ARE MISSING THINGS LOOK AT THIS LOOP FIRST HACKED TOGETHER AT BEST
 	for x in xrange(1,len(list_string)-2): 
 		output_file.write("\t")

@@ -1,0 +1,9 @@
+var x:(double)
+var y:(double)
+x = (1,2,3,4)
+y = (1,2,3,4)
+loop
+{
+	x = x+y
+	y = y+y	
+}

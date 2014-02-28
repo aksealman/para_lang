@@ -22,6 +22,7 @@ After this is working we want to get some baseline if statments working, and the
 #include <iostream>
 #include <fstream>
 #include <queue>
+#include <stack>
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef YY_INTERACTIVE
@@ -35,7 +36,8 @@ After this is working we want to get some baseline if statments working, and the
 using namespace std;
 extern unordered_map <string, vector <double>> var_table;
 extern queue <string> par_table;
-extern bool var_table_check_set(string var_name, vector<double>& var_values);
+extern stack <string> var_name_table;
+extern bool var_table_check_set(string var_name, const vector<double>& var_values);
 extern bool var_table_check(string var_name);
 extern void par_table_push(string x);
 extern void par_table_pop();
@@ -44,7 +46,7 @@ extern void vector_fill(vector <double>& var_values, double first, double second
 
 
 
-%token VAR_NAME COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP EQUAL UNKNOWN PRINT SUM LOOP LB RB
+%token VAR_NAME ELSE COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP IF EQUAL UNKNOWN PRINT SUM LOOP LB RB LT GT DEQUAL
 %left PLUS MINUS MUL DIV
 
 
@@ -61,6 +63,11 @@ expression : |
 			 }
 	
 statement :
+	if_statement
+			{
+				$$ = $1;
+			}
+	|
 	loop_statement
 			{
 				$$ = $1;
@@ -132,12 +139,25 @@ var_set: var_name EQUAL LP number RP
 				if(!var_table_check_set((string) $1, var_value))
 					output_stream << "__m128 ";
 				output_stream << (string) $1 << " = result_container;\n";
+				//WE NEED THE IF TABLE HERE TO GET JUST THE PLAIN EXPRESSION IF THIS IS CALLED FROM AN IF STATEMENT. IT IS A STACK SO ONLY THE RECENT VALUES MATTER. WE MAY NEED TO CHANGE THIS CODE SO TO CALL A SPECIFC GRAMMAR, HOWEVER AS OF RIGHT NOW I WOULD JUST LIKE TO GET THIS TO WORK.
+				var_name_table.push(string ($1));
 				par_table_pop();
 			        $$ = strdup((output_stream.str()).c_str());				
 			
 			};
 
-
+if_var_set:
+	var_name EQUAL add_sub_exr
+		{
+		
+				//as of now opperation contains temp container and result container.
+				stringstream output_stream;
+				output_stream << par_table.front();
+				//ONCE AGAIN DO NOT KNOW WHAT TO FILL VEC_VALUE WITH SO JUST FILLING WITH 0's
+				var_name_table.push(string ($1));
+				par_table_pop();
+			        $$ = strdup((output_stream.str()).c_str());				
+		};
 
 var_declare: variable var_name COLON LP type RP
 			
@@ -251,22 +271,64 @@ term:
 	|
 	var_name 
 	{};
+
 loop_statement:
-	LOOP LB loop_expression RB
+	LOOP LB conditional_expression RB
 		{
 			stringstream output_stream;
 			output_stream << "for(int ii=0; ii < 1000; ++ii)\n{\n" << string ($3) << "}\n";	
 			$$ = strdup((output_stream.str()).c_str());
 		};
-loop_expression:
+if_statement:
+	IF LP conditional RP LB conditional_expression RB ELSE LB conditional_expression RB
+	{
+		/*Huge set of steps we need to execute here
+		STEP 1. Create a mask of type conditional since we have mask included by default we do not need to reinit mask (_m128) **DONE**
+		STEP 2. Mask the two results in the conditial operations. (via then and else)
+		STEP 3. Store the result in some kind of contianer.
+		As of right now just return the first conditional expression that works
+		*/
+		stringstream output_stream;
+		output_stream << string ($3);
+		vector <double> vec_value;
+		vector_fill(vec_value, 0,0,0,0);
+		//if not found add __m128 to the type
+		if(!var_table_check_set("then", vec_value))
+		{
+			output_stream << "__m128 ";
+		}
+		output_stream << "then = " << string ($6) << ";\n";
+		if(!var_table_check_set("else_m", vec_value))
+		{
+			output_stream << "__m128 ";
+		}	
+		output_stream << "else_m = " << string ($10) << ";\n";
+		//Now to store the results. stores both in same varible. If we have seperate varibles we just need to use the and on one and the andnot on another
+		output_stream << var_name_table.top() << " = _mm_or_ps( _mm_and_ps(mask,then), _mm_andnot_ps(mask,else_m));";
+		//as of right now we do not have the var name to store. We need to somehow grab that.
+		var_name_table.pop();
+    		$$ = strdup((output_stream.str()).c_str());	
+	};
+
+conditional_expression:
 	|
-	loop_expression statement 
+	conditional_expression if_var_set
 		{
 			stringstream output_stream;
-			output_stream << string ($1) << string ($2);
+			output_stream << string ($2);
 			$$ = strdup((output_stream.str()).c_str());
+
 		};
 
+conditional:
+	var_name con_op var_name
+		{
+			stringstream output_stream;
+//			output_stream << string ($1) << string ($2) << string ($3) << "\n";
+			//Create our mask assignment
+			output_stream << "mask = "<< string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";
+			$$ = strdup((output_stream.str()).c_str());
+		};
 
 
 print_statement:
@@ -297,6 +359,25 @@ number: NUMBER 		{
 					$$ = strdup(temp.c_str());
 
 			};
+
+con_op:
+	LT
+		{
+			string temp = "_mm_cmplt_ps";
+			$$ = strdup(temp.c_str());
+		}
+	|
+	GT
+		{
+			string temp = "_mm_cmpgt_ps";
+			$$ = strdup(temp.c_str());
+		}
+	|
+	DEQUAL
+		{
+			string temp = "_mm_cmpeq_ps";
+			$$ = strdup(temp.c_str());
+		};
 mul_operator:
  	MUL 	
 		{
@@ -344,10 +425,11 @@ var_name : VAR_NAME	{
 
 unordered_map <string, vector <double>> var_table;
 queue <string> par_table;
+stack <string> var_name_table;
 /*
 This function will check to see if the value var_name exsits in our global var_table as well as set the value of var_table to our vector we passed in
 */
-bool var_table_check_set(string var_name, vector <double> &var_values)
+bool var_table_check_set(string var_name, const vector <double> &var_values)
 {	
 	if(!var_table_check(var_name))
 	{

@@ -13,9 +13,15 @@
 ********************************************TODO***************************************
 Zak Williams
 
-THe next step I need to implment is a constant loop. This is essencially going to be a big stupid loop that only loops over items a constant amount of times. (hardset at 1000). This is just to get a baseline loop implemented in the language so that people can build on it in the future.
+one line if statemnts have been implemented. 
 
-After this is working we want to get some baseline if statments working, and then expand upon them. 
+I have an idea for multi line if statements.
+
+What we do right now for single line if statements is push two elements onto the stack we pop both of them off and see if they are equal. If they are then we are changing the same varible. Else we are not chaning the same varible and can do different operations.
+
+So what we can attempt to do for multi line if statements is create an if and else clause. Inside both of these clauses we push all of the varibles into a map or somthing. We have two maps. If a varible is in one map but not the other then we execute our first case. If they are both the same then we execute our second case. This has some potential to lead into problems with differnet sized if statements but we will cross that bridge when we come to it.
+
+This is my next train of thought. I will try doing this tommrow with another branch on git, and see how it plays out. I do not belive that I will have it implemented in time for dr chappell.
 */
 
 %header{
@@ -279,7 +285,7 @@ loop_statement:
 			$$ = strdup((output_stream.str()).c_str());
 		};
 if_statement:
-	IF LP conditional RP LB conditional_expression RB ELSE LB conditional_expression RB
+	IF conditional LB conditional_expression RB ELSE LB conditional_expression RB
 	{
 		/*Huge set of steps we need to execute here
 		STEP 1. Create a mask of type conditional since we have mask included by default we do not need to reinit mask (_m128) **DONE**
@@ -288,7 +294,7 @@ if_statement:
 		As of right now just return the first conditional expression that works
 		*/
 		stringstream output_stream;
-		output_stream << string ($3);
+		output_stream << string ($2);
 		vector <double> vec_value;
 		vector_fill(vec_value, 0,0,0,0);
 		//if not found add __m128 to the type
@@ -296,12 +302,12 @@ if_statement:
 		{
 			output_stream << "__m128 ";
 		}
-		output_stream << "then = " << string ($6) << ";\n";
+		output_stream << "then = " << string ($4) << ";\n";
 		if(!var_table_check_set("else_m", vec_value))
 		{
 			output_stream << "__m128 ";
 		}	
-		output_stream << "else_m = " << string ($10) << ";\n";
+		output_stream << "else_m = " << string ($8) << ";\n";
 		string second = var_name_table.top();
 		var_name_table.pop();
 		string first = var_name_table.top();
@@ -317,26 +323,35 @@ if_statement:
 		//as of right now we do not have the var name to store. We need to somehow grab that.
     		$$ = strdup((output_stream.str()).c_str());	
 	};
-
-conditional_expression:
-	|
-	conditional_expression if_var_set
-		{
-			stringstream output_stream;
-			output_stream << string ($2);
-			$$ = strdup((output_stream.str()).c_str());
-
-		};
-
 conditional:
-	var_name con_op var_name
+      LP var_name con_op var_name RP
 		{
 			stringstream output_stream;
 //			output_stream << string ($1) << string ($2) << string ($3) << "\n";
 			//Create our mask assignment
-			output_stream << "mask = "<< string ($2) << "(" << string ($1) << "," << string ($3) << ");\n";
+			output_stream << "mask = "<< string ($3) << "(" << string ($2) << "," << string ($4) << ");\n";
 			$$ = strdup((output_stream.str()).c_str());
 		};
+conditional_expression:	
+	conditional_expression if_var_set
+		{
+			cout << var_name_table.size() << endl;
+			/*Time to construct a string*/
+			cout << string ($1) << endl;
+			cout << endl;
+			cout << string ($2) << endl;
+			cout << endl;			
+			cout << "end here" << endl;
+
+			stringstream output_stream;
+			output_stream << string ($2);
+			$$ = strdup((output_stream.str()).c_str());
+
+		}
+	|
+	if_var_set{};
+
+
 
 
 print_statement:

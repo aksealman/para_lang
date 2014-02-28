@@ -139,8 +139,7 @@ var_set: var_name EQUAL LP number RP
 				if(!var_table_check_set((string) $1, var_value))
 					output_stream << "__m128 ";
 				output_stream << (string) $1 << " = result_container;\n";
-				//WE NEED THE IF TABLE HERE TO GET JUST THE PLAIN EXPRESSION IF THIS IS CALLED FROM AN IF STATEMENT. IT IS A STACK SO ONLY THE RECENT VALUES MATTER. WE MAY NEED TO CHANGE THIS CODE SO TO CALL A SPECIFC GRAMMAR, HOWEVER AS OF RIGHT NOW I WOULD JUST LIKE TO GET THIS TO WORK.
-				var_name_table.push(string ($1));
+				//WE NEED THE IF TABLE HERE TO GET JUST THE PLAIN EXPRESSION IF THIS IS CALLED FROM AN IF STATEMENT. IT IS A STACK SO ONLY THE RECENT VALUES MATTER. WE MAY NEED TO CHANGE THIS CODE SO TO CALL A SPECIFC GRAMMAR, HOWEVER AS OF RIGHT NOW I WOULD JUST LIKE TO GET THIS TO WORK.	
 				par_table_pop();
 			        $$ = strdup((output_stream.str()).c_str());				
 			
@@ -303,10 +302,19 @@ if_statement:
 			output_stream << "__m128 ";
 		}	
 		output_stream << "else_m = " << string ($10) << ";\n";
-		//Now to store the results. stores both in same varible. If we have seperate varibles we just need to use the and on one and the andnot on another
-		output_stream << var_name_table.top() << " = _mm_or_ps( _mm_and_ps(mask,then), _mm_andnot_ps(mask,else_m));";
-		//as of right now we do not have the var name to store. We need to somehow grab that.
+		string second = var_name_table.top();
 		var_name_table.pop();
+		string first = var_name_table.top();
+		var_name_table.pop();
+		if(first == second)
+		//Now to store the results. stores both in same varible. If we have seperate varibles we just need to use the and on one and the andnot on another
+			output_stream << first << " = _mm_or_ps( _mm_and_ps(mask,then), _mm_andnot_ps(mask,else_m));\n";
+		else
+		{
+			output_stream << first << " = _mm_or_ps(_mm_and_ps(mask,then),_mm_andnot_ps(mask," << first << "));\n";
+			output_stream << second << " = _mm_or_ps(_mm_andnot_ps(mask,else_m),_mm_and_ps(mask," << second << "));\n";
+		}
+		//as of right now we do not have the var name to store. We need to somehow grab that.
     		$$ = strdup((output_stream.str()).c_str());	
 	};
 

@@ -36,18 +36,21 @@ This is my next train of thought. I will try doing this tommrow with another bra
 #include <FlexLexer.h>
 #endif
 #include <string>
+#include <utility>
 #include <string.h>
 #include <vector>
 #include <sstream>
 #include <unordered_map>
+#include <algorithm>
 using namespace std;
 extern unordered_map <string, vector <double>> var_table;
-extern unordered_map <string, bool> table_1;
-extern unordered_map <string, bool> table_2;
 extern queue <string> par_table;
+extern vector <pair<string,string>> if_table_var_then;
+extern vector <pair<string,string>> if_table_var_else;
 extern stack <string> var_name_table;
 extern bool var_table_check_set(string var_name, const vector<double>& var_values);
 extern bool var_table_check(string var_name);
+extern void if_sort_table(vector <pair<string,string>> &inter, vector <pair<string,string>> &v1_min_v2,vector <pair<string,string>> &v2_min_v1);
 extern void par_table_push(string x);
 extern void par_table_pop();
 extern void vector_fill(vector <double>& var_values, double first, double second, double third, double forth);
@@ -154,15 +157,44 @@ var_set: var_name EQUAL LP number RP
 			
 			};
 
-if_var_set:
+if_var_set_then:
 	var_name EQUAL add_sub_exr
 		{
 		
 				//as of now opperation contains temp container and result container.
 				stringstream output_stream;
+				pair <string,string> temp;
 				output_stream << par_table.front();
 				//ONCE AGAIN DO NOT KNOW WHAT TO FILL VEC_VALUE WITH SO JUST FILLING WITH 0's
-				var_name_table.push(string ($1));
+			//	var_name_table.push(string ($1));
+				//if_table_var_then.push(string ($1));
+				//var name
+				temp.first = string ($1);
+				//operation on var name
+				temp.second = par_table.front();
+				//push our pair onto the then stack
+				if_table_var_then.push_back(temp);
+				par_table_pop();
+			        $$ = strdup((output_stream.str()).c_str());				
+		};
+
+if_var_set_else:
+	var_name EQUAL add_sub_exr
+		{
+		
+				//as of now opperation contains temp container and result container.
+				stringstream output_stream;
+				pair <string,string> temp;
+				output_stream << par_table.front();
+				//ONCE AGAIN DO NOT KNOW WHAT TO FILL VEC_VALUE WITH SO JUST FILLING WITH 0's
+			//	var_name_table.push(string ($1));
+			//	if_table_var_else.push(string ($1));
+				//var name
+				temp.first = string ($1);
+				//operation on var name
+				temp.second = par_table.front();
+				//push our pair onto the else stack
+				if_table_var_else.push_back(temp);
 				par_table_pop();
 			        $$ = strdup((output_stream.str()).c_str());				
 		};
@@ -281,8 +313,9 @@ term:
 	{};
 
 loop_statement:
-	LOOP LB conditional_expression RB
+	LOOP LB then_expression RB
 		{
+			//CHANGED FROM CONDITIONAL EXPRESSIONS CURRENTLY DOES NOT WORK. NEED TO IMPLMENET MORE IN ORDER TO GET SOMETHING WORKING.
 			stringstream output_stream;
 			output_stream << "for(int ii=0; ii < 1000; ++ii)\n{\n" << string ($3) << "}\n";	
 			$$ = strdup((output_stream.str()).c_str());
@@ -300,7 +333,123 @@ if_statement:
 		output_stream << string ($2);
 		vector <double> vec_value;
 		vector_fill(vec_value, 0,0,0,0);
-		//if not found add __m128 to the type
+		for(int ii = 0; ii < if_table_var_then.size(); ++ii)
+		{
+			for(int jj = 0; jj < if_table_var_else.size(); ++jj)
+			{	
+				if(if_table_var_then[ii].first == if_table_var_else[jj].first)
+				{
+					//if this is true delete both from the vector and write them to outstream
+					if(!var_table_check_set("then", vec_value))
+					{
+						output_stream << "__m128 ";
+					}
+					//search for inter[ii].first inside if_then
+					output_stream << "then = " << if_table_var_then[ii].second << ";\n";
+					if(!var_table_check_set("else_m", vec_value))
+					{
+						output_stream << "__m128 ";
+					}
+					output_stream << "else_m = " << if_table_var_else[jj].second << ";\n";
+					output_stream << if_table_var_then[ii].first << " = _mm_or_ps( _mm_and_ps(mask,then), _mm_andnot_ps(mask,else_m));\n";
+					if_table_var_then.erase(if_table_var_then.begin()+ii);
+					if_table_var_else.erase(if_table_var_else.begin()+jj);
+					--ii;
+					--jj;
+					break;
+				}
+			}
+		}
+		//now we plug through each and finish up the varibles that were only found in if_table_var_then and if_table_var_else
+		for(int ii = 0; ii < if_table_var_then.size(); )
+		{
+			//if this is true delete both from the vector and write them to outstream
+			if(!var_table_check_set("then", vec_value))
+			{
+				output_stream << "__m128 ";
+			}
+			//search for inter[ii].first inside if_then
+			output_stream << "then = " << if_table_var_then[ii].second << ";\n";
+
+			output_stream << if_table_var_then[ii].first   << " = _mm_or_ps(_mm_and_ps(mask,then),_mm_andnot_ps(mask," << if_table_var_then[ii].first << "));\n";	
+			if_table_var_then.erase(if_table_var_then.begin());	
+		}
+		for(int ii = 0; ii < if_table_var_else.size(); )
+		{
+			//if this is true delete both from the vector and write them to outstream
+			if(!var_table_check_set("else_m", vec_value))
+			{
+				output_stream << "__m128 ";
+			}
+			//search for inter[ii].first inside if_then
+			output_stream << "else_m = " << if_table_var_else[ii].second << ";\n";
+			output_stream << if_table_var_else[ii].first << " = _mm_or_ps(_mm_andnot_ps(mask,else_m),_mm_and_ps(mask," << if_table_var_else[ii].first << "));\n";
+			if_table_var_else.erase(if_table_var_else.begin());
+		}	
+
+		//This does not work. We end up losing information
+		/*
+		vector <pair<string,string>> inter;
+		vector <pair<string,string>> v1_min_v2;
+		vector <pair<string,string>> v2_min_v1;
+		if_sort_table(inter, v1_min_v2, v2_min_v1);
+		cout << inter.size() << endl;
+		cout << endl;
+		cout << v1_min_v2.size() << endl;
+		cout << endl;
+		cout << v2_min_v1.size() << endl;
+		cout << endl;
+		cout << if_table_var_then.size() << endl;
+		cout << endl;	
+		cout << if_table_var_else.size() << endl;
+		cout << endl;
+		//we lose information with intersection (the second statement). We need some way to get the second statement. It might make more sense to just plow through both of the vectors.
+		for(int ii = 0; ii < inter.size(); ++ii)
+		{
+			cout << "in inter" << endl;
+			if(!var_table_check_set("then", vec_value))
+			{
+				output_stream << "__m128 ";
+			}
+			//search for inter[ii].first inside if_then
+			output_stream << "then = " << inter[ii].first << ";\n";
+			if(!var_table_check_set("else_m", vec_value))
+			{
+				output_stream << "__m128 ";
+			}
+			output_stream << "else_m = " << inter[ii].second << ";\n";
+		}	
+		for(int ii = 0; ii < v1_min_v2.size(); ++ii)
+		{
+			cout << "should not see this" << endl;
+			if(!var_table_check_set("then", vec_value))
+			{
+				output_stream << "__m128 ";
+			}
+			output_stream << "then = " << v1_min_v2[ii].first << ";\n";
+			if(!var_table_check_set("else_m", vec_value))
+			{
+				output_stream << "__m128 ";
+			}
+			output_stream << "else_m = " << v1_min_v2[ii].second << ";\n";
+		}
+		for(int ii = 0; ii < v2_min_v1.size(); ++ii)
+		{
+			cout << "this either" << endl;
+			if(!var_table_check_set("then", vec_value))
+			{
+				output_stream << "__m128 ";
+			}
+			output_stream << "then = " << v2_min_v1[ii].first << ";\n";
+			if(!var_table_check_set("else_m", vec_value))
+			{
+				output_stream << "__m128 ";
+			}
+			output_stream << "else_m = " << v2_min_v1[ii].second << ";\n";
+		}
+		*/
+		//need to find the intersection of both of the vectors.
+		/*
 		if(!var_table_check_set("then", vec_value))
 		{
 			output_stream << "__m128 ";
@@ -324,6 +473,7 @@ if_statement:
 			output_stream << second << " = _mm_or_ps(_mm_andnot_ps(mask,else_m),_mm_and_ps(mask," << second << "));\n";
 		}
 		//as of right now we do not have the var name to store. We need to somehow grab that.
+		*/
     		$$ = strdup((output_stream.str()).c_str());	
 	};
 conditional:
@@ -338,13 +488,7 @@ conditional:
 then_expression:	
 	then_expression if_var_set_then
 		{
-			cout << var_name_table.size() << endl;
-			/*Time to construct a string*/
-			cout << string ($1) << endl;
-			cout << endl;
-			cout << string ($2) << endl;
-			cout << endl;			
-			cout << "end here" << endl;
+
 
 			stringstream output_stream;
 			output_stream << string ($2);
@@ -357,13 +501,7 @@ then_expression:
 else_expression:	
 	else_expression if_var_set_else
 		{
-			cout << var_name_table.size() << endl;
 			/*Time to construct a string*/
-			cout << string ($1) << endl;
-			cout << endl;
-			cout << string ($2) << endl;
-			cout << endl;			
-			cout << "end here" << endl;
 
 			stringstream output_stream;
 			output_stream << string ($2);
@@ -468,6 +606,8 @@ var_name : VAR_NAME	{
 
 unordered_map <string, vector <double>> var_table;
 queue <string> par_table;
+vector <pair<string,string>> if_table_var_then;
+vector <pair<string,string>> if_table_var_else;
 stack <string> var_name_table;
 /*
 This function will check to see if the value var_name exsits in our global var_table as well as set the value of var_table to our vector we passed in
@@ -497,7 +637,16 @@ bool var_table_check(string var_name)
 	//return false if not found
 	return !(var_table.find(var_name) == var_table.end());
 }
-
+void if_sort_table(vector <pair<string,string>> & inter, vector <pair<string,string>> & v1_min_v2, vector <pair<string,string>> & v2_min_v1)
+{
+	//sort the two (hopefully they are storted by first and not second or anything weird)
+	sort(if_table_var_then.begin(), if_table_var_then.end());
+	sort(if_table_var_else.begin(), if_table_var_else.end());
+	//Take the intersection of the two and put them into inter passed to sort table
+	set_intersection(if_table_var_then.begin(),if_table_var_then.end(), if_table_var_else.begin(), if_table_var_else.end(), back_inserter(inter));
+	set_difference(if_table_var_then.begin(),if_table_var_then.end(), if_table_var_else.begin(), if_table_var_else.end(), back_inserter(v1_min_v2));	
+	set_difference(if_table_var_else.begin(),if_table_var_else.end(), if_table_var_then.begin(), if_table_var_then.end(), back_inserter(v2_min_v1));
+}
 void par_table_push(string x)
 {
 //	cout << "pushing" << endl;

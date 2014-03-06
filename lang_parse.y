@@ -57,7 +57,6 @@ extern void vector_fill(vector <double>& var_values, double first, double second
 %}
 
 
-
 %token VAR_NAME ELSE COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP IF EQUAL UNKNOWN PRINT SUM LOOP LB RB LT GT DEQUAL
 %left PLUS MINUS MUL DIV
 

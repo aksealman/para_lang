@@ -5,6 +5,7 @@
 #include <sstream>
 #include <fstream>
 #include <cstdlib>
+#include <stdio.h>
 #include <iostream>
 #include "parser.h"
 
@@ -72,7 +73,9 @@ DIGIT1 [1-9]
 
 [a-zA-Z][0-9a-zA-Z]*		{return Parser::VAR_NAME;}
 
-[ \t\f\n]			;
+"#".*"\n"			; 
+			
+[[ \t\f\n]			;
 
 .				{return Parser::UNKNOWN;}
 

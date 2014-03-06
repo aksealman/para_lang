@@ -1,6 +1,7 @@
 all: parser.o lexer.o 
-	g++ -o trial lexer.o parser.o -lfl -w -std=c++0x
-
+	g++ -o /usr/bin/karrot_exe lexer.o parser.o -lfl -w -std=c++0x
+	cp program_pipe.py /usr/bin/karrot
+	chmod 777 /usr/bin/karrot
 parser.o: parser.cpp
 	g++ -c -o parser.o parser.cpp -fpermissive -w -lfl -std=c++0x
 
@@ -18,4 +19,5 @@ clean:
 	rm -f *.o
 	rm -f *.cpp
 	rm -f *.h
-	rm -f trial
+	rm -f /usr/bin/karrot_exe
+	rm -f /usr/bin/karrot

@@ -37,6 +37,7 @@ else:
 	p1 = subprocess.Popen(["cat", file_name], stdout=subprocess.PIPE)
 	#name of program that make creates change this when I come up with a name
 	p2 = subprocess.Popen(["karrot_exe"], stdin=p1.stdout, stdout=subprocess.PIPE)
+	#p3 = subprocess.Popen(["touch", "a.out"])
 	p1.stdout.close()
 	prog_output = p2.communicate()
  	list_string = string.split(prog_output[0],"\n")
@@ -56,6 +57,4 @@ else:
 		output_file.write("\n")
 	output_file.write("}\n")
 	
-	p3 = subprocess.Popen(["g++", output, "-msse"], stdout=subprocess.PIPE)	
-	if sys.argv[1] == "run":
-		subprocess.call(["./a.out"])	
+	p4 = subprocess.Popen(["g++", output, "-msse"], stdout=subprocess.PIPE)

@@ -44,7 +44,7 @@ This is my next train of thought. I will try doing this tommrow with another bra
 #include <algorithm>
 using namespace std;
 extern unordered_map <string, vector <double>> var_table;
-extern queue <string> par_table;
+extern stack <string> par_table;
 extern vector <pair<string,string>> if_table_var_then;
 extern vector <pair<string,string>> if_table_var_else;
 extern stack <string> var_name_table;
@@ -150,7 +150,6 @@ var_set: var_name EQUAL LP number RP
 				if(!var_table_check_set((string) $1, var_value))
 					output_stream << "__m128 ";
 				output_stream << (string) $1 << " = result_container;\n";
-				//WE NEED THE IF TABLE HERE TO GET JUST THE PLAIN EXPRESSION IF THIS IS CALLED FROM AN IF STATEMENT. IT IS A STACK SO ONLY THE RECENT VALUES MATTER. WE MAY NEED TO CHANGE THIS CODE SO TO CALL A SPECIFC GRAMMAR, HOWEVER AS OF RIGHT NOW I WOULD JUST LIKE TO GET THIS TO WORK.	
 				par_table_pop();
 			        $$ = strdup((output_stream.str()).c_str());				
 			
@@ -163,14 +162,10 @@ if_var_set_then:
 				//as of now opperation contains temp container and result container.
 				stringstream output_stream;
 				pair <string,string> temp;
-				output_stream << par_table.front();
-				//ONCE AGAIN DO NOT KNOW WHAT TO FILL VEC_VALUE WITH SO JUST FILLING WITH 0's
-			//	var_name_table.push(string ($1));
-				//if_table_var_then.push(string ($1));
-				//var name
+				output_stream << par_table.top();
 				temp.first = string ($1);
 				//operation on var name
-				temp.second = par_table.front();
+				temp.second = par_table.top();
 				//push our pair onto the then stack
 				if_table_var_then.push_back(temp);
 				par_table_pop();
@@ -184,14 +179,10 @@ if_var_set_else:
 				//as of now opperation contains temp container and result container.
 				stringstream output_stream;
 				pair <string,string> temp;
-				output_stream << par_table.front();
-				//ONCE AGAIN DO NOT KNOW WHAT TO FILL VEC_VALUE WITH SO JUST FILLING WITH 0's
-			//	var_name_table.push(string ($1));
-			//	if_table_var_else.push(string ($1));
-				//var name
+				output_stream << par_table.top();
 				temp.first = string ($1);
 				//operation on var name
-				temp.second = par_table.front();
+				temp.second = par_table.top();
 				//push our pair onto the else stack
 				if_table_var_else.push_back(temp);
 				par_table_pop();
@@ -205,6 +196,7 @@ var_declare: variable var_name COLON LP type RP
 				vector_fill(var_value,0,0,0,0);
 				if(!var_table_check_set((string)$2, var_value))
 				{
+
 					stringstream ss;
 					ss << "__m128 " << (string) $2 << ";";	
 					$$ = strdup((ss.str()).c_str());
@@ -228,23 +220,23 @@ add_sub_exr:
 				//$1 is not a varible then it is an operation, which should be on its own line
 				if(!var_table_check(string ($1)) && !var_table_check(string ($3)))
 				{
-					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << ",";
-					trial_stream << string ($2) << "(" << par_table.front() << ",";
+					output_stream << "result_container = " << string ($2) << "(" << par_table.top() << ",";
+					trial_stream << string ($2) << "(" << par_table.top() << ",";
 					par_table_pop();
-					trial_stream << par_table.front() << ")";
-					output_stream << par_table.front() << ");\n";
+					trial_stream << par_table.top() << ")";
+					output_stream << par_table.top() << ");\n";
 					par_table_pop();
 				}
 				else if(!var_table_check(string ($1)))
 				{	
-					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($3) << ");\n";
-					trial_stream << string ($2) << "(" << par_table.front() << "," << string ($3) << ")";
+					output_stream << "result_container = " << string ($2) << "(" << par_table.top() << "," << string ($3) << ");\n";
+					trial_stream << string ($2) << "(" << par_table.top() << "," << string ($3) << ")";
 					par_table_pop();
 				}
 				else if(!var_table_check(string ($3)))
 				{
-					output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($1) << ");\n";
-					trial_stream << string ($2) << "(" << par_table.front() << "," << string ($1) << ")";
+					output_stream << "result_container = " << string ($2) << "(" << par_table.top() << "," << string ($1) << ");\n";
+					trial_stream << string ($2) << "(" << par_table.top() << "," << string ($1) << ")";
 					par_table_pop();
 				}
 				else
@@ -271,24 +263,24 @@ mul_div_exr:
 		//Need to check term as well, also means we need to check both
 		if(!var_table_check(string($1)) && !var_table_check(string($3)))
 		{
-			output_stream << "result_container = " << string ($2) << "(" << par_table.front() << ",";
-			trial_stream << string ($2) << "(" << par_table.front() << ",";
+			output_stream << "result_container = " << string ($2) << "(" << par_table.top() << ",";
+			trial_stream << string ($2) << "(" << par_table.top() << ",";
 			par_table_pop();
-			trial_stream << par_table.front() << ")";
-			output_stream << par_table.front() << ");\n";
+			trial_stream << par_table.top() << ")";
+			output_stream << par_table.top() << ");\n";
 			par_table_pop();	
 		}
 		else if(!var_table_check(string ($1)))
 		{	
 			//output_stream << string ($1);
-			output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($3) << ");\n";
-			trial_stream << string ($2) << "(" << par_table.front() << "," << string ($3) << ")";	
+			output_stream << "result_container = " << string ($2) << "(" << par_table.top() << "," << string ($3) << ");\n";
+			trial_stream << string ($2) << "(" << par_table.top() << "," << string ($3) << ")";	
 			par_table_pop();
 		}
 		else if(!var_table_check(string ($3)))
 		{
-			output_stream << "result_container = " << string ($2) << "(" << par_table.front() << "," << string ($1) << ");\n";
-			trial_stream << string ($2) << "(" << par_table.front() << "," << string ($1) << ")";	
+			output_stream << "result_container = " << string ($2) << "(" << par_table.top() << "," << string ($1) << ");\n";
+			trial_stream << string ($2) << "(" << par_table.top() << "," << string ($1) << ")";	
 			par_table_pop();
 		}	
 		else
@@ -311,12 +303,30 @@ term:
 	var_name 
 	{};
 
+
+
 loop_statement:
-	LOOP LB then_expression RB
+	LOOP number LB loop_exr RB
 		{
 			//CHANGED FROM CONDITIONAL EXPRESSIONS CURRENTLY DOES NOT WORK. NEED TO IMPLMENET MORE IN ORDER TO GET SOMETHING WORKING.
 			stringstream output_stream;
-			output_stream << "for(int ii=0; ii < 1000; ++ii)\n{\n" << string ($3) << "}\n";	
+			output_stream << "for(int ii=0; ii < " << string($2) << "; ++ii)\n{\n" << string ($4) << "}\n";	
+			$$ = strdup((output_stream.str()).c_str());
+		};
+
+loop_exr:	
+ 	|
+	print_statement loop_exr
+		{
+			stringstream output_stream;
+			output_stream << string ($1) << string ($2);
+			$$ = strdup((output_stream.str()).c_str());
+		}
+	|
+ 	var_set loop_exr
+		{
+			stringstream output_stream;
+			output_stream << string ($1) << string ($2);
 			$$ = strdup((output_stream.str()).c_str());
 		};
 if_statement:
@@ -386,93 +396,7 @@ if_statement:
 			if_table_var_else.erase(if_table_var_else.begin());
 		}	
 
-		//This does not work. We end up losing information
-		/*
-		vector <pair<string,string>> inter;
-		vector <pair<string,string>> v1_min_v2;
-		vector <pair<string,string>> v2_min_v1;
-		if_sort_table(inter, v1_min_v2, v2_min_v1);
-		cout << inter.size() << endl;
-		cout << endl;
-		cout << v1_min_v2.size() << endl;
-		cout << endl;
-		cout << v2_min_v1.size() << endl;
-		cout << endl;
-		cout << if_table_var_then.size() << endl;
-		cout << endl;	
-		cout << if_table_var_else.size() << endl;
-		cout << endl;
-		//we lose information with intersection (the second statement). We need some way to get the second statement. It might make more sense to just plow through both of the vectors.
-		for(int ii = 0; ii < inter.size(); ++ii)
-		{
-			cout << "in inter" << endl;
-			if(!var_table_check_set("then", vec_value))
-			{
-				output_stream << "__m128 ";
-			}
-			//search for inter[ii].first inside if_then
-			output_stream << "then = " << inter[ii].first << ";\n";
-			if(!var_table_check_set("else_m", vec_value))
-			{
-				output_stream << "__m128 ";
-			}
-			output_stream << "else_m = " << inter[ii].second << ";\n";
-		}	
-		for(int ii = 0; ii < v1_min_v2.size(); ++ii)
-		{
-			cout << "should not see this" << endl;
-			if(!var_table_check_set("then", vec_value))
-			{
-				output_stream << "__m128 ";
-			}
-			output_stream << "then = " << v1_min_v2[ii].first << ";\n";
-			if(!var_table_check_set("else_m", vec_value))
-			{
-				output_stream << "__m128 ";
-			}
-			output_stream << "else_m = " << v1_min_v2[ii].second << ";\n";
-		}
-		for(int ii = 0; ii < v2_min_v1.size(); ++ii)
-		{
-			cout << "this either" << endl;
-			if(!var_table_check_set("then", vec_value))
-			{
-				output_stream << "__m128 ";
-			}
-			output_stream << "then = " << v2_min_v1[ii].first << ";\n";
-			if(!var_table_check_set("else_m", vec_value))
-			{
-				output_stream << "__m128 ";
-			}
-			output_stream << "else_m = " << v2_min_v1[ii].second << ";\n";
-		}
-		*/
-		//need to find the intersection of both of the vectors.
-		/*
-		if(!var_table_check_set("then", vec_value))
-		{
-			output_stream << "__m128 ";
-		}
-		output_stream << "then = " << string ($4) << ";\n";
-		if(!var_table_check_set("else_m", vec_value))
-		{
-			output_stream << "__m128 ";
-		}	
-		output_stream << "else_m = " << string ($8) << ";\n";
-		string second = var_name_table.top();
-		var_name_table.pop();
-		string first = var_name_table.top();
-		var_name_table.pop();
-		if(first == second)
-		//Now to store the results. stores both in same varible. If we have seperate varibles we just need to use the and on one and the andnot on another
-			output_stream << first << " = _mm_or_ps( _mm_and_ps(mask,then), _mm_andnot_ps(mask,else_m));\n";
-		else
-		{
-			output_stream << first << " = _mm_or_ps(_mm_and_ps(mask,then),_mm_andnot_ps(mask," << first << "));\n";
-			output_stream << second << " = _mm_or_ps(_mm_andnot_ps(mask,else_m),_mm_and_ps(mask," << second << "));\n";
-		}
-		//as of right now we do not have the var name to store. We need to somehow grab that.
-		*/
+		
     		$$ = strdup((output_stream.str()).c_str());	
 	};
 conditional:
@@ -604,7 +528,7 @@ var_name : VAR_NAME	{
 %%
 
 unordered_map <string, vector <double>> var_table;
-queue <string> par_table;
+stack <string> par_table;
 vector <pair<string,string>> if_table_var_then;
 vector <pair<string,string>> if_table_var_else;
 stack <string> var_name_table;

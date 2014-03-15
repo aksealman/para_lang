@@ -82,32 +82,11 @@ DIGIT1 [1-9]
 %%
 
 
-int main(int argc, char* argv[])
+int main()
 {
-	ifstream compile_file;
-	stringstream file_info;
-	string file_name;
-	if(argc < 2)
-	{
-		cout << "No arguements taken debug mode." << endl;
-		cout << endl;
-		Parser parser;
-//		while(true)
-//		{
-			cout << parser.yyparse() << endl;
-		
-//		}
-		return 0;	
-	}
-	else if(argc == 2)	
-	{
-		cout << "Loading file " << argv[1] << endl;
-		file_name = argv[1];
-	}
-	Parser parser(file_name);
-	cout << "attempting first parse" << endl;
-	parser.yyparse();
-	cout << "first parse" << endl;	
+	cout << "No arguements taken debug mode." << endl;
 	cout << endl;
-	return 0;
+	Parser parser;
+	cout << parser.yyparse() << endl;	
+	return 0;	
 }

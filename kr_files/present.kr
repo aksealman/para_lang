@@ -1,3 +1,4 @@
+#!/usr/bin/karrot
 var x : (double)
 var y : (double)
 var z : (double)

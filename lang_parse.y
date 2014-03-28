@@ -57,7 +57,7 @@ extern void vector_fill(vector <double>& var_values, double first, double second
 %}
 
 
-%token VAR_NAME ELSE COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP IF EQUAL UNKNOWN PRINT SUM LOOP LB RB LT GT DEQUAL
+%token VAR_NAME ELSE COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP IF EQUAL UNKNOWN PRINT SUM LOOP LB RB LT GT DEQUAL RAND
 %left PLUS MINUS MUL DIV
 
 
@@ -99,6 +99,10 @@ statement :
 				$$ = $1;
 			}
 	|
+	simd_op		{
+				$$ = $1;
+			}
+	|
 	print_statement
 			{
 				$$ = $1;
@@ -126,6 +130,22 @@ var_set: var_name EQUAL LP number RP
 				$$ = strdup((output_stream.str()).c_str());	
 
 			}
+| var_name EQUAL RAND number
+			{
+				stringstream output_stream;
+				vector <double> vec_value;
+				vector_fill(vec_value, 0,0,0,0);
+				if(!var_table_check_set(string($1),vec_value))
+				{
+					output_stream << "__m128 ";
+				}
+				output_stream << string ($1) << " = _mm_setr_ps(";
+				for(int ii = 0; ii < 3; ++ii)
+					output_stream << "rand()%" << string($4) << "+1,";
+				output_stream << "rand()%" << string($4) << "+1);\n";
+				$$ = strdup((output_stream.str()).c_str());
+			}
+
 | var_name EQUAL LP number COMMA number COMMA number COMMA number RP
 			{
 				stringstream output_stream;
@@ -139,6 +159,7 @@ var_set: var_name EQUAL LP number RP
 				$$ = strdup((output_stream.str()).c_str());
 
 			}
+
 | var_name EQUAL add_sub_exr 
 			{
 				//as of now opperation contains temp container and result container.
@@ -154,6 +175,17 @@ var_set: var_name EQUAL LP number RP
 			        $$ = strdup((output_stream.str()).c_str());				
 			
 			};
+
+simd_op:
+	SUM LP var_name RP
+		{
+				stringstream output_stream;
+				output_stream << "_mm_store_ps(print_float," << (string) $3 << ");\n";
+				output_stream << "cout << print_float[0]+print_float[1]+print_float[2]+print_float[3] << endl;\n";	
+				$$ = strdup((output_stream.str()).c_str());	
+	
+
+		}
 
 if_var_set_then:
 	var_name EQUAL add_sub_exr
@@ -315,20 +347,24 @@ loop_statement:
 		};
 
 loop_exr:	
- 	|
-	print_statement loop_exr
+	loop_exr loop_part
 		{
 			stringstream output_stream;
-			output_stream << string ($1) << string ($2);
+			output_stream << string ($1) << string($2);
 			$$ = strdup((output_stream.str()).c_str());
 		}
 	|
- 	var_set loop_exr
+ 	loop_part
 		{
 			stringstream output_stream;
-			output_stream << string ($1) << string ($2);
+			output_stream << string ($1);
 			$$ = strdup((output_stream.str()).c_str());
 		};
+loop_part:
+	print_statement{}
+	|
+	var_set{};
+
 if_statement:
 	IF conditional LB then_expression RB ELSE LB else_expression RB
 	{

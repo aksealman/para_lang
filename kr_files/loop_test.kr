@@ -5,9 +5,9 @@ x = (1,2,3,4)
 y = (1,2,3,4)
 loop 20
 {
-	x = x+y
-	print y
+		print x	
+		x = x+y
 }
-
-print x
-print y
+x = y + y
+#print x
+#print y

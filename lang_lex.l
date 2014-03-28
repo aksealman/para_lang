@@ -43,6 +43,8 @@ DIGIT1 [1-9]
 
 "else"				{return Parser::ELSE;}
 
+"rand" 				{return Parser::RAND;}
+
 "<" 				{return Parser::LT;}
 
 ">"				{return Parser::GT;}

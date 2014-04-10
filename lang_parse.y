@@ -9,22 +9,6 @@
 %define LEX_BODY   {return lexer.yylex();}
 %define ERROR_BODY {cerr << "error encountered at line: "<<lexer.lineno()<<"last word parsed:"<<lexer.YYText()<<"\n";}
 
-/*
-********************************************TODO***************************************
-Zak Williams
-
-one line if statemnts have been implemented. 
-
-I have an idea for multi line if statements.
-
-What we do right now for single line if statements is push two elements onto the stack we pop both of them off and see if they are equal. If they are then we are changing the same varible. Else we are not chaning the same varible and can do different operations.
-
-So what we can attempt to do for multi line if statements is create an if and else clause. Inside both of these clauses we push all of the varibles into a map or somthing. We have two maps. If a varible is in one map but not the other then we execute our first case. If they are both the same then we execute our second case. This has some potential to lead into problems with differnet sized if statements but we will cross that bridge when we come to it.
-
-This is my next train of thought. I will try doing this tommrow with another branch on git, and see how it plays out. I do not belive that I will have it implemented in time for dr chappell.
-
-*/
-
 %header{
 #include <iostream>
 #include <fstream>
@@ -158,6 +142,13 @@ var_set: var_name EQUAL LP number RP
 				output_stream << (string) $1 << " = _mm_setr_ps" << num_stream.str();
 				$$ = strdup((output_stream.str()).c_str());
 
+			}
+|
+var_name EQUAL var_name
+			{
+				stringstream output_stream;
+				output_stream << string($1) << "=" << string($3) << ";\n";
+				$$ = strdup((output_stream.str()).c_str());
 			}
 
 | var_name EQUAL add_sub_exr 

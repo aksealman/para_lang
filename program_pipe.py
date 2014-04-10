@@ -20,19 +20,8 @@ else:
 		file_name = sys.argv[1]
 		output = "temp.cpp"
 	elif sys_len == 3:
-		if sys.argv[1] == "run":
-			file_name = sys.argv[2]
-			output = "temp.cpp"
-		else:
-			file_name = sys.argv[1]
-			output = sys.argv[2]
-	else:
-		if sys.argv[1] == "run":
-			file_name = sys.argv[2]
-			output = sys.argv[3]
-		else:
-			file_name = sys.argv[1]
-			output = sys.argv[2]
+		file_name = sys.argv[1]
+		output = sys.argv[2]	
 		
 	p1 = subprocess.Popen(["cat", file_name], stdout=subprocess.PIPE)
 	#name of program that make creates change this when I come up with a name
@@ -56,5 +45,5 @@ else:
 		output_file.write(list_string[x])
 		output_file.write("\n")
 	output_file.write("}\n")
-	
+	output_file.close()	
 	p4 = subprocess.Popen(["g++", output, "-msse"], stdout=subprocess.PIPE)

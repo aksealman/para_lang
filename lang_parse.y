@@ -8,7 +8,13 @@
 		ifstream input_file; 
 %define LEX_BODY   {return lexer.yylex();}
 %define ERROR_BODY {cerr << "error encountered at line: "<<lexer.lineno()<<"last word parsed:"<<lexer.YYText()<<"\n";}
+/*
+See LICENCE.TXT for licence.
 
+Parse file for Karrot programing language.
+
+Created by Zakoriah Williams
+*/
 %header{
 #include <iostream>
 #include <fstream>
@@ -43,9 +49,6 @@ extern void vector_fill(vector <double>& var_values, double first, double second
 
 %token VAR_NAME ELSE COMMA NUMBER DECI_NUM TYPE VAR COLON LP RP IF EQUAL UNKNOWN PRINT SUM LOOP LB RB LT GT DEQUAL RAND
 %left PLUS MINUS MUL DIV
-
-
-
 %%
 
 program : expression   {};
@@ -116,6 +119,7 @@ var_set: var_name EQUAL LP number RP
 			}
 | var_name EQUAL RAND number
 			{
+				//random for timing suite. 
 				stringstream output_stream;
 				vector <double> vec_value;
 				vector_fill(vec_value, 0,0,0,0);
@@ -132,6 +136,7 @@ var_set: var_name EQUAL LP number RP
 
 | var_name EQUAL LP number COMMA number COMMA number COMMA number RP
 			{
+				//Four number declaration
 				stringstream output_stream;
 				stringstream num_stream;
 				num_stream << "(" << string ($4) << "," << string ($6) << "," << string ($8) << "," << string ($10) << ");"; 
@@ -146,6 +151,7 @@ var_set: var_name EQUAL LP number RP
 |
 var_name EQUAL var_name
 			{
+				//creates a reduce/reduce conflict. Allright for now however but needs to be fixed eventually.
 				stringstream output_stream;
 				output_stream << string($1) << "=" << string($3) << ";\n";
 				$$ = strdup((output_stream.str()).c_str());

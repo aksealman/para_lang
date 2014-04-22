@@ -1,3 +1,7 @@
+//SEE LICENCE.TXT FOR COPYRIGHT
+
+//Lex file which creates tokens for the Karrot programming language
+//Created by Zak Williams 2014
 %option c++
 %option noyywrap
 
